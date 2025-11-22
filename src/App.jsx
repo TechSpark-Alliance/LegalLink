@@ -1,12 +1,8 @@
-import React from 'react'
+import React from 'react';
+import UserLogin from './pages/Authentication/User/UserLogin';
 
 function App() {
-  return (
-    <div className="App">
-      <h1>LegalLink</h1>
-      <p>Welcome to LegalLink</p>
-    </div>
-  )
+  return <UserLogin />;
 }
 
-export default App
+export default App;
