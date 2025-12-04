@@ -1,8 +1,28 @@
 import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import UserLogin from './pages/Authentication/User/UserLogin';
+import RegisterRole from './pages/Authentication/RegisterRole';
+import ClientRegister from './pages/Authentication/Client/ClientRegister';
+import LawyerRegister from './pages/Authentication/Lawyer/LawyerRegister';
+import ClientHome from './pages/Home/ClientHome';
+import LawyerHome from './pages/Home/LawyerHome';
+import VerifyLawyers from './pages/Admin/VerifyLawyers';
 
 function App() {
-  return <UserLogin />;
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Navigate to="/register" replace />} />
+        <Route path="/login" element={<UserLogin />} />
+        <Route path="/register" element={<RegisterRole />} />
+        <Route path="/register/client" element={<ClientRegister />} />
+        <Route path="/register/lawyer" element={<LawyerRegister />} />
+        <Route path="/home/client" element={<ClientHome />} />
+        <Route path="/home/lawyer" element={<LawyerHome />} />
+        <Route path="/admin/lawyers" element={<VerifyLawyers />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
 export default App;

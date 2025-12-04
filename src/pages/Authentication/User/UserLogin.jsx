@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import './UserLogin.css';
 import logo from '../../../assets/legal-link-logo.png';
 import heroIllustration from '../../../assets/legal-hero.png';
@@ -24,12 +25,42 @@ const EyeIcon = () => (
 );
 
 const UserLogin = () => {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
 
   const togglePassword = () => setShowPassword((prev) => !prev);
 
-  const handleSubmit = (event) => {
+  const handleChange = (e) => {
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleSubmit = async (event) => {
     event.preventDefault();
+    try {
+      const apiBase = import.meta.env.VITE_APP_API || 'http://localhost:8000/api/v1';
+      const res = await fetch(`${apiBase}/auth/user/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.detail || 'Login failed');
+      }
+      const data = await res.json();
+      const role = data?.user?.role;
+      if (role === 'lawyer') {
+        navigate('/home/lawyer');
+      } else {
+        navigate('/home/client');
+      }
+    } catch (err) {
+      alert(err.message || 'Login failed');
+    }
   };
 
   return (
@@ -62,7 +93,15 @@ const UserLogin = () => {
           <form className="signin-form" onSubmit={handleSubmit}>
             <div className="form-field">
               <label htmlFor="email">Email</label>
-              <input id="email" type="email" name="email" placeholder="Enter your email" required />
+              <input
+                id="email"
+                type="email"
+                name="email"
+                placeholder="Enter your email"
+                value={formData.email}
+                onChange={handleChange}
+                required
+              />
             </div>
 
             <div className="form-field">
@@ -78,6 +117,8 @@ const UserLogin = () => {
                   type={showPassword ? 'text' : 'password'}
                   name="password"
                   placeholder="Enter your password"
+                  value={formData.password}
+                  onChange={handleChange}
                   required
                 />
                 <button
@@ -98,9 +139,9 @@ const UserLogin = () => {
 
           <p className="signin-register">
             New to LegalLink?{' '}
-            <a href="/" className="link-strong">
+            <Link to="/register" className="link-strong">
               Register your account.
-            </a>
+            </Link>
           </p>
 
           <p className="signin-footer">© 2025 Copyright LegalLink. All rights reserved.</p>
