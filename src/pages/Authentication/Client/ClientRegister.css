@@ -1,0 +1,387 @@
+@import '../User/UserLogin.css';
+
+.client-register-panel {
+  gap: 1.5rem;
+  justify-content: flex-start;
+  background: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.05), transparent 35%),
+    linear-gradient(180deg, #2f3847 0%, #1c2432 100%);
+}
+
+.register-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  margin-top: 0.5rem;
+  width: 100%;
+  align-items: center;
+}
+
+.steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20.5rem;
+  text-align: center;
+}
+
+.step {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--text-muted);
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.step.active {
+  color: #fff;
+}
+
+.step.completed {
+  color: #f4be3e;
+}
+
+.step.pending {
+  color: var(--text-muted);
+}
+
+.step-circle {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #c7c9cc;
+  color: #333;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.2);
+}
+
+.step-circle.active {
+  background: #f3c757;
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgba(244, 183, 64, 0.38);
+}
+
+.step-circle.completed {
+  background: #f4be3e;
+  color: #1f1502;
+}
+
+.step-circle.muted {
+  background: #c7c9cc;
+  color: #484f58;
+}
+
+.step-label {
+  font-size: 1.05rem;
+}
+
+.progress-bar {
+  width: 100%;
+  max-width: none;
+  align-self: center;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+  overflow: hidden;
+}
+
+.progress-fill {
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(135deg, #f4c440, #f1b117);
+  border-radius: inherit;
+}
+
+.client-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.section-card {
+  background: transparent;
+  border: none;
+  border-radius: 18px;
+  padding: 0;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.section-head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  justify-content: center;
+  text-align: center;
+}
+
+.section-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  color: #e3c345;
+}
+
+.section-icon svg {
+  width: 65px;
+  height: 65px;
+}
+
+.terms-container {
+  background: #fffbea;
+  border: none;
+  border-radius: 0 0 14px 14px;
+  padding: 1.1rem 1.2rem;
+}
+
+.terms-card .section-icon,
+.terms-icon {
+  color: #1c2740;
+}
+
+.terms-card .section-icon svg {
+  width: 26px;
+  height: 26px;
+}
+
+.section-label {
+  font-weight: 700;
+  font-size: 2rem;
+  margin: 0;
+  color: #f4be3e;
+}
+
+.section-subtitle {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 1.35rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.85rem;
+}
+
+.form-field.full-width {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
+.terms-card {
+  background: #fffbea;
+  border: 1px solid #e3c345;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.terms-list {
+  list-style-position: inside;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  padding: 0;
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.terms-list li {
+  color: var(--text-light);
+  padding: 0.35rem 0;
+}
+
+.terms-card .section-head {
+  background: #e3c345;
+  color: #1c2740;
+  padding: 0.9rem 1.1rem;
+  margin: 0;
+}
+
+.terms-card .section-label {
+  color: #1c2740;
+}
+
+.terms-card .section-subtitle {
+  color: #1c2740;
+}
+
+.term-title {
+  font-weight: 700;
+  margin: 0 0 0.25rem;
+}
+
+.terms-list p {
+  margin: 0;
+  /* color: var(--text-muted); */
+  color:#000000;
+  line-height: 1.5;
+}
+
+.terms-checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  text-align: center;
+  font-size: 1.35rem;
+  color:#ffffff;
+}
+
+.terms-checkbox span {
+  white-space: nowrap;
+}
+
+.terms-consent {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-top: 1.1rem;
+}
+
+.terms-checkbox input {
+  width: 35px;
+  height: 35px;
+  accent-color: #f4be3e;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.ghost-button {
+  border: none;
+  color: #c4c7cc;
+  background: transparent;
+  padding: 0.75rem 1rem;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 1.5rem;
+  text-decoration: none;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.ghost-button:hover {
+  color: #f4be3e;
+  transform: translateY(-1px);
+}
+
+.cta-button {
+  min-width: 170px;
+  box-shadow: 0 12px 28px rgba(244, 183, 64, 0.35);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.cta-button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.input-with-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon {
+  position: absolute;
+  left: 0.85rem;
+  color: #cdd1d8;
+  font-size: 1rem;
+}
+
+.input-with-icon input {
+  width: 100%;
+  padding: 1rem 1rem 1rem 2.4rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(58, 68, 80, 0.7);
+  color: var(--text-light);
+  font-size: 1rem;
+}
+
+.input-with-icon input::placeholder {
+  color: #c5c9d1;
+}
+
+.input-with-icon input:focus {
+  border-color: #f4be3e;
+  box-shadow: 0 0 0 2px rgba(244, 183, 64, 0.25);
+}
+
+.password-wrapper .password-toggle {
+  right: 0.65rem;
+  background: transparent;
+  border: none;
+}
+
+.form-field label {
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.signin-footer {
+  margin-top: 1rem;
+  font-size: 0.95rem;
+}
+
+.label-with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.label-icon {
+  color: #ffffff;
+  font-size: 1.35rem;
+}
+
+.label-icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+.password-toggle {
+  color: #ffffff;
+  box-shadow: none;
+  padding: 0;
+}
+
+.input-with-icon,
+.input-icon {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .steps {
+    gap: 1rem;
+  }
+
+  .step-dot {
+    width: 30px;
+    height: 30px;
+  }
+}
+
