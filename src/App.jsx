@@ -7,6 +7,7 @@ import LawyerRegister from './pages/Authentication/Lawyer/LawyerRegister';
 import ClientHome from './pages/Home/ClientHome';
 import LawyerHome from './pages/Home/LawyerHome';
 import VerifyLawyers from './pages/Admin/VerifyLawyers';
+import UserManagement from './pages/Admin/UserManagement';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <Route path="/home/client" element={<ClientHome />} />
         <Route path="/home/lawyer" element={<LawyerHome />} />
         <Route path="/admin/lawyers" element={<VerifyLawyers />} />
+        <Route path="/admin/users" element={<UserManagement />} />
       </Routes>
     </BrowserRouter>
   );

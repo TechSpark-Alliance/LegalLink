@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import './VerifyLawyers.css';
-import logo from '../../assets/legal-link-logo.png';
+import AdminLayout from './AdminLayout';
 
 const VerifyLawyers = () => {
   const [lawyers, setLawyers] = useState([]);
@@ -66,35 +66,20 @@ const VerifyLawyers = () => {
   };
 
   return (
-    <div className="admin-page">
-      <header className="admin-header">
-        <div className="admin-brand">
-          <img src={logo} alt="LegalLink logo" className="admin-logo" />
-          <div>
-            <p className="brand-title">LegalLink</p>
-            <p className="brand-subtitle">Admin Console</p>
-          </div>
-        </div>
-        <nav className="admin-nav">
-          <a className="nav-link active" href="/admin/lawyers">
-            Lawyers
-          </a>
-          <span className="nav-link muted">Clients</span>
-          <span className="nav-link muted">Settings</span>
-        </nav>
-      </header>
-
-      <div className="admin-card">
-        <h1>Pending Lawyer Verifications</h1>
+    <AdminLayout
+      title="Pending Lawyer Verifications"
+      subtitle="Review documents and approve or reject"
+    >
+      <div className="admin-card admin-surface">
         {error && <p className="admin-error">{error}</p>}
         {loading ? (
-          <p className="admin-muted">Loading...</p>
+          <p className="admin-text-muted">Loading...</p>
         ) : lawyers.length === 0 ? (
-          <p className="admin-muted">No pending lawyers.</p>
+          <p className="admin-text-muted">No pending lawyers.</p>
         ) : (
           <div className="lawyer-list">
             {lawyers.map((lawyer) => (
-              <div key={lawyer._id || lawyer.id} className="lawyer-row">
+              <div key={lawyer._id || lawyer.id} className="lawyer-row admin-surface">
                 <div className="lawyer-main">
                   <div className="lawyer-name">{lawyer.full_name || lawyer.fullName}</div>
                   <div className="lawyer-email">{lawyer.email}</div>
@@ -136,7 +121,7 @@ const VerifyLawyers = () => {
           </div>
         )}
       </div>
-    </div>
+    </AdminLayout>
   );
 };
 
