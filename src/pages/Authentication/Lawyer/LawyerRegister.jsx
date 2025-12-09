@@ -144,6 +144,7 @@ const LawyerRegister = () => {
     phone: '',
     state: '',
     city: '',
+    profileImage: '',
     sijilCertificate: '',
     sijilCertificateUrl: '',
     lawFirm: '',
@@ -154,10 +155,13 @@ const LawyerRegister = () => {
     about: '',
   });
   const [fileInputKeys, setFileInputKeys] = useState({
+    profileImage: 0,
     sijilCertificate: 0,
     lawFirmCertificate: 0,
   });
   const [showExpertiseMenu, setShowExpertiseMenu] = useState(false);
+
+  const progressWidth = currentStep === 1 ? '33%' : currentStep === 2 ? '66%' : '100%';
 
   const expertiseOptions = [
     { value: 'litigation', label: 'Litigation' },
@@ -322,7 +326,7 @@ const LawyerRegister = () => {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.detail || 'Registration failed');
       }
-      navigate('/home/lawyer');
+      navigate('/lawyer/cases');
     } catch (err) {
       alert(err.message || 'Registration failed');
     } finally {
@@ -330,7 +334,6 @@ const LawyerRegister = () => {
     }
   };
 
-  const progressWidth = currentStep === 1 ? '33%' : currentStep === 2 ? '66%' : '100%';
 
   return (
     <div className="auth-fluid legallink-auth">
@@ -345,8 +348,8 @@ const LawyerRegister = () => {
 
           <div className="register-progress">
             <div className="steps">
-              <div className={`step ${currentStep === 1 ? 'active' : 'completed'}`}>
-                <span className={`step-circle ${currentStep === 1 ? 'active' : 'completed'}`}>
+              <div className={`step ${currentStep === 1 ? 'active' : currentStep > 1 ? 'completed' : 'pending'}`}>
+                <span className={`step-circle ${currentStep === 1 ? 'active' : currentStep > 1 ? 'completed' : 'muted'}`}>
                   <PersonIcon />
                 </span>
                 <span className="step-label">Account</span>
@@ -364,8 +367,8 @@ const LawyerRegister = () => {
                 <span className="step-label">Finish</span>
               </div>
             </div>
-            <div className="progress-bar">
-              <div className="progress-fill" style={{ width: progressWidth }} />
+            <div className="lawyer-progress-bar">
+              <div className="lawyer-progress-fill" style={{ width: progressWidth }} />
             </div>
           </div>
 
@@ -809,7 +812,7 @@ const LawyerRegister = () => {
                 className="ctbutton"
                 disabled={currentStep === 3 && !termsAccepted}
               >
-                {currentStep < 3 ? 'Next' : (
+                {currentStep < 3 ? 'Next >' : (
                   <>
                     <SubmitIcon /> Submit Registration
                   </>
