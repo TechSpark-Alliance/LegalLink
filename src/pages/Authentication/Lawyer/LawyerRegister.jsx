@@ -145,6 +145,7 @@ const LawyerRegister = () => {
     state: '',
     city: '',
     profileImage: '',
+    profileImageUrl: '',
     sijilCertificate: '',
     sijilCertificateUrl: '',
     lawFirm: '',
@@ -273,6 +274,7 @@ const LawyerRegister = () => {
 
     if (currentStep === 2) {
       const requiredStep2 = [
+        { key: 'profileImage', label: 'Profile photo' },
         { key: 'sijilCertificate', label: 'Sijil Annual and Practising Certificate' },
         { key: 'expertise', label: 'Expertise category' },
         { key: 'yearsOfExperience', label: 'Years of experience' },
@@ -317,6 +319,7 @@ const LawyerRegister = () => {
           law_firm: formData.lawFirm || undefined,
           law_firm_certificate: formData.lawFirmCertificate || undefined,
           law_firm_certificate_url: formData.lawFirmCertificateUrl || undefined,
+          profile_image: formData.profileImageUrl || undefined,
           expertise: formData.expertise,
           years_of_experience: formData.yearsOfExperience ? Number(formData.yearsOfExperience) : undefined,
           about: formData.about,
@@ -562,9 +565,37 @@ const LawyerRegister = () => {
                     <TickIcon />
                   </span>
                   <div>
-                    <p className="section-label">Account Information</p>
-                    <p className="section-subtitle">Create your secure account credentials</p>
+                    <p className="section-label">Professional Details</p>
+                    <p className="section-subtitle">Upload your certificates and practice details</p>
                   </div>
+                </div>
+
+                <div className="form-field">
+                  <label className="label-with-icon">
+                    <span className="label-icon" aria-hidden="true">
+                      <UploadIcon />
+                    </span>
+                    Profile photo *
+                  </label>
+                  <input
+                    key={fileInputKeys.profileImage}
+                    type="file"
+                    accept="image/*"
+                    name="profileImage"
+                    onChange={handleFileChange}
+                    required
+                  />
+                  {formData.profileImage && (
+                    <div className="chip-row">
+                      <span className="chip file-chip">
+                        {formData.profileImage}
+                        <button type="button" aria-label="Remove file" onClick={() => handleClearFile('profileImage')}>
+                          x
+                        </button>
+                      </span>
+                    </div>
+                  )}
+                  {errors.profileImage && <p className="input-error">{errors.profileImage}</p>}
                 </div>
 
                 <div className="form-field">
@@ -587,7 +618,7 @@ const LawyerRegister = () => {
                       <span className="chip file-chip">
                         {formData.sijilCertificate}
                         <button type="button" aria-label="Remove file" onClick={() => handleClearFile('sijilCertificate')}>
-                          ×
+                          x
                         </button>
                       </span>
                     </div>
@@ -632,7 +663,7 @@ const LawyerRegister = () => {
                       <span className="chip file-chip">
                         {formData.lawFirmCertificate}
                         <button type="button" aria-label="Remove file" onClick={() => handleClearFile('lawFirmCertificate')}>
-                          ×
+                          x
                         </button>
                       </span>
                     </div>
@@ -678,7 +709,7 @@ const LawyerRegister = () => {
                           <span key={val} className="chip">
                             {label}
                             <button type="button" aria-label={`Remove ${label}`} onClick={() => removeExpertise(val)}>
-                              ×
+                              x
                             </button>
                           </span>
                         );

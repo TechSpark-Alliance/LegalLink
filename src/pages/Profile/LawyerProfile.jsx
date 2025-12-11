@@ -19,7 +19,7 @@ export default function LawyerProfile() {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({});
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState({ sijil: false, firm: false });
+  const [uploading, setUploading] = useState({ sijil: false, firm: false, avatar: false });
   const [loading, setLoading] = useState(true);
   const [expertiseOpen, setExpertiseOpen] = useState(false);
   const stateOptions = [
@@ -121,6 +121,7 @@ export default function LawyerProfile() {
           law_firm: user.law_firm || '',
           sijil_certificate: user.sijil_certificate || '',
           law_firm_certificate: user.law_firm_certificate || '',
+          profile_image: user.profile_image || '',
         });
       }
     } catch (err) {
@@ -165,6 +166,7 @@ export default function LawyerProfile() {
         law_firm: form.law_firm,
         sijil_certificate: form.sijil_certificate,
         law_firm_certificate: form.law_firm_certificate,
+        profile_image: form.profile_image,
         expertise: Array.isArray(form.expertise) ? form.expertise : [],
       };
       const res = await fetch(`${apiBase}/auth/user/me`, {
@@ -188,7 +190,7 @@ export default function LawyerProfile() {
     }
   };
 
-  const detailRow = (label, value, fieldKey) => {
+  const detailRow = (label, value, fieldKey, isCompact = false, isFull = false) => {
     const isEditable = editing && fieldKey;
     const inputProps = {
       value: form[fieldKey] ?? '',
@@ -196,11 +198,11 @@ export default function LawyerProfile() {
     };
 
     return (
-      <div className="profile-row" key={label}>
+      <div className={`profile-row ${isCompact ? 'compact-row' : ''} ${isFull ? 'span-full' : ''}`} key={label}>
         <span className="profile-label">{label}</span>
         {isEditable ? (
           fieldKey === 'about' ? (
-            <textarea className="profile-input profile-textarea" rows={3} {...inputProps} />
+            <textarea className="profile-input profile-textarea" rows={4} {...inputProps} />
           ) : (
             <input className="profile-input" {...inputProps} />
           )
@@ -219,7 +221,8 @@ export default function LawyerProfile() {
 
   const uploadFile = async (fieldKey, file, uploadLabel) => {
     if (!file) return;
-    const loadingKey = fieldKey === 'sijil_certificate' ? 'sijil' : 'firm';
+    const loadingKey =
+      fieldKey === 'sijil_certificate' ? 'sijil' : fieldKey === 'law_firm_certificate' ? 'firm' : 'avatar';
     setUploading((u) => ({ ...u, [loadingKey]: true }));
     try {
       const formData = new FormData();
@@ -243,7 +246,8 @@ export default function LawyerProfile() {
 
   const fileRow = (label, fieldKey) => {
     const rawUrl = form[fieldKey] || '';
-    const loadingKey = fieldKey === 'sijil_certificate' ? 'sijil' : 'firm';
+    const loadingKey =
+      fieldKey === 'sijil_certificate' ? 'sijil' : fieldKey === 'law_firm_certificate' ? 'firm' : 'avatar';
     const displayUrl = (() => {
       if (!rawUrl) return '';
       const value = String(rawUrl);
@@ -290,6 +294,54 @@ export default function LawyerProfile() {
                 onChange={(e) => uploadFile(fieldKey, e.target.files?.[0], label)}
               />
             </label>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const profileImageRow = () => {
+    const rawUrl = form.profile_image || '';
+    const displayUrl = (() => {
+      if (!rawUrl) return '';
+      const value = String(rawUrl);
+      if (value.startsWith('http')) return value;
+      const prefix = apiRoot.endsWith('/') ? apiRoot.slice(0, -1) : apiRoot;
+      const path = value.startsWith('/') ? value : `/${value}`;
+      return `${prefix}${path}`;
+    })();
+    const loading = uploading.avatar;
+    return (
+      <div className="profile-row compact-row avatar-row" key="profile-image">
+        <span className="profile-label">Profile photo</span>
+        {!editing ? (
+          displayUrl ? (
+            <img src={displayUrl} alt="Profile" className="avatar-preview" />
+          ) : (
+            <div className="avatar-placeholder">N/A</div>
+          )
+        ) : (
+          <div className="avatar-edit">
+            {displayUrl ? (
+              <img src={displayUrl} alt="Profile" className="avatar-preview" />
+            ) : (
+              <div className="avatar-placeholder">No image</div>
+            )}
+            <div className="file-actions">
+              {rawUrl && (
+                <button className="ghost-btn" onClick={() => setForm((prev) => ({ ...prev, profile_image: '' }))}>
+                  Remove
+                </button>
+              )}
+              <label className="upload-btn">
+                {loading ? 'Uploading...' : rawUrl ? 'Replace' : 'Upload'}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => uploadFile('profile_image', e.target.files?.[0], 'Profile photo')}
+                />
+              </label>
             </div>
           </div>
         )}
@@ -414,7 +466,8 @@ export default function LawyerProfile() {
           )}
         </div>
         <div className="profile-grid">
-          {detailRow('Full name', profile.full_name, 'full_name')}
+          {profileImageRow()}
+          {detailRow('Full name', profile.full_name, 'full_name', true)}
           {detailRow('Email', profile.email)}
           {detailRow('Phone', profile.phone, 'phone')}
           {detailRow('Role', profile.role)}
@@ -443,7 +496,7 @@ export default function LawyerProfile() {
             detailRow('State', profile.state, null)
           )}
           {detailRow('City', profile.city, 'city')}
-          {detailRow('About', profile.about, 'about')}
+          {detailRow('About', profile.about, 'about', false, true)}
         </div>
       </div>
     </div>

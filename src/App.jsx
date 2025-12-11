@@ -13,7 +13,9 @@ import CaseDetail from './pages/Cases/CaseDetail';
 import ClientsList from './pages/Clients/ClientsList';
 import ClientDetail from './pages/Clients/ClientDetail';
 import LawyerProfile from './pages/Profile/LawyerProfile';
+import ClientProfile from './pages/Profile/ClientProfile';
 import RequireLawyer from './components/RequireLawyer';
+import RequireClient from './components/RequireClient';
 
 function App() {
   return (
@@ -24,7 +26,22 @@ function App() {
         <Route path="/register" element={<RegisterRole />} />
         <Route path="/register/client" element={<ClientRegister />} />
         <Route path="/register/lawyer" element={<LawyerRegister />} />
-        <Route path="/home/client" element={<ClientHome />} />
+        <Route
+          path="/home/client"
+          element={
+            <RequireClient>
+              <ClientHome />
+            </RequireClient>
+          }
+        />
+        <Route
+          path="/profile/client"
+          element={
+            <RequireClient>
+              <ClientProfile />
+            </RequireClient>
+          }
+        />
         <Route
           path="/lawyer/cases"
           element={
