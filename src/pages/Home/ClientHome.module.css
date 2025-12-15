@@ -1,0 +1,315 @@
+.page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 45%, #1a2438 100%);
+  color: var(--color-text-primary);
+}
+
+.main {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: var(--space-lg) var(--space-lg) var(--space-xxl);
+  display: grid;
+  gap: var(--space-xl);
+}
+
+.sectionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  color: var(--color-text-primary);
+}
+
+.sectionHead h2 {
+  margin: 0;
+  font-size: var(--font-size-xl);
+  letter-spacing: -0.01em;
+}
+
+.topLawyers {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.explore {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: var(--space-xs) var(--space-md);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
+
+.searchIcon {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--color-text-primary);
+  position: relative;
+}
+
+.searchIcon::after {
+  content: '';
+  position: absolute;
+  width: 6px;
+  height: 2px;
+  background: var(--color-text-primary);
+  bottom: -4px;
+  right: -6px;
+  transform: rotate(45deg);
+}
+
+.tabRow {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.tab {
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-text-secondary);
+  padding: var(--space-xs) var(--space-md);
+  border-radius: 999px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+
+.tab:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--color-text-primary);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+}
+
+.tabActive {
+  background: var(--color-accent);
+  color: var(--color-text-dark);
+  border-color: transparent;
+}
+
+.lawyerGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-md);
+}
+
+.lawyerCard {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-lg);
+  padding: var(--space-sm);
+  min-height: 220px;
+  box-shadow: var(--shadow-card);
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+
+.lawyerCard:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.22);
+}
+
+.lawyerImage {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-md);
+  background: linear-gradient(140deg, rgba(210, 166, 60, 0.18), rgba(41, 50, 60, 0.8));
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  display: grid;
+  place-items: center;
+  color: var(--color-text-primary);
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 3 / 3.5;
+}
+
+.hasImage {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border: none;
+}
+
+.featured {
+  background: linear-gradient(140deg, rgba(227, 195, 69, 0.18), rgba(210, 166, 60, 0.3));
+}
+
+.overlayName {
+  position: absolute;
+  bottom: 18px;
+  left: 18px;
+  font-weight: 700;
+  font-size: var(--font-size-md);
+}
+
+.overlayLocation {
+  position: absolute;
+  bottom: 6px;
+  left: 18px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+.reviews {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.reviewGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-md);
+}
+
+.reviewCard {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  color: var(--color-text-primary);
+  box-shadow: var(--shadow-card);
+  display: grid;
+  gap: var(--space-xs);
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+
+.reviewCard:hover {
+  transform: translateY(-3px) scale(1.01);
+  box-shadow: 0 12px 22px rgba(0, 0, 0, 0.2);
+}
+
+.reviewTop {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: var(--color-text-dark);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: var(--font-size-md);
+}
+
+.reviewTitle {
+  margin: 0;
+  font-weight: 600;
+}
+
+.stars {
+  color: var(--color-accent);
+  letter-spacing: 2px;
+}
+
+.reviewHeadline {
+  margin: 4px 0 0;
+  font-weight: 600;
+}
+
+.reviewText {
+  margin: 0;
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-base);
+}
+
+.ctaBand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  padding: var(--space-sm) var(--space-lg);
+  border-radius: 40px;
+  box-shadow: var(--shadow-card);
+}
+
+.ctaPill {
+  background: var(--color-accent);
+  color: var(--color-text-dark);
+  padding: var(--space-xs) var(--space-md);
+  border-radius: 999px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.ctaSub {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.featureGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-md);
+}
+
+.infoGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--space-md);
+}
+
+.infoWide {
+  display: grid;
+}
+
+.footer {
+  background: #000;
+  color: #f7f7f7;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  margin-top: var(--space-xl);
+}
+
+.footerBrand {
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.footerSocial {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.socialIcon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid #f7f7f7;
+}
+
+.footerLinks {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.footerLinks a {
+  color: #f7f7f7;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+@media (max-width: 720px) {
+  .main {
+    padding: var(--space-md);
+  }
+
+  .ctaBand {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
