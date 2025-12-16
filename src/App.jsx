@@ -6,6 +6,9 @@ import ClientRegister from './pages/Authentication/Client/ClientRegister';
 import LawyerRegister from './pages/Authentication/Lawyer/LawyerRegister';
 import ClientHome from './pages/Home/ClientHome';
 import LawyerHome from './pages/Home/LawyerHome';
+import Lawyers from './pages/Lawyers/Lawyers';
+import LawyerProfile from './pages/Lawyers/LawyerProfile';
+import LawyerReviews from './pages/Lawyers/LawyerReviews';
 import VerifyLawyers from './pages/Admin/VerifyLawyers';
 import UserManagement from './pages/Admin/UserManagement';
 
@@ -20,6 +23,9 @@ function App() {
         <Route path="/register/lawyer" element={<LawyerRegister />} />
         <Route path="/home/client" element={<ClientHome />} />
         <Route path="/home/lawyer" element={<LawyerHome />} />
+        <Route path="/lawyers/:id/reviews" element={<LawyerReviews />} />
+        <Route path="/lawyers/:id" element={<LawyerProfile />} />
+        <Route path="/lawyers" element={<Lawyers />} />
         <Route path="/admin/lawyers" element={<VerifyLawyers />} />
         <Route path="/admin/users" element={<UserManagement />} />
       </Routes>

@@ -52,6 +52,13 @@ const UserLogin = () => {
         throw new Error(data.detail || 'Login failed');
       }
       const data = await res.json();
+      if (data?.user) {
+        try {
+          localStorage.setItem('ll_user', JSON.stringify(data.user));
+        } catch (err) {
+          console.warn('Failed to cache user profile', err);
+        }
+      }
       const role = data?.user?.role;
       if (role === 'lawyer') {
         navigate('/home/lawyer');

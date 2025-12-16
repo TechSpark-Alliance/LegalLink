@@ -1,0 +1,164 @@
+.lawyer-reviews-page {
+  --bg-1: var(--color-bg-primary);
+  --bg-2: var(--color-bg-secondary);
+  --text: #f2f6ff;
+  --muted: #c3ccdb;
+  --card: #d9d9d9;
+  --gold: #e3c345;
+  --shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+  --radius-card: 16px;
+
+  min-height: 100vh;
+  background: linear-gradient(180deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 45%, #1a2438 100%);
+  color: var(--text);
+}
+
+.reviews-shell {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 48px 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.reviews-head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.crumb {
+  margin: 0 0 6px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.crumb a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.crumb a:hover {
+  color: var(--text);
+}
+
+.reviews-head h1 {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.subtext {
+  margin: 6px 0 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.head-actions {
+  display: flex;
+  align-items: center;
+  align-self: flex-start;
+}
+
+.back-link {
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 120ms ease, transform 120ms ease, text-decoration-color 120ms ease;
+}
+
+.back-link:hover {
+  color: var(--text);
+  text-decoration: underline;
+  text-decoration-color: var(--text);
+  transform: translateY(-1px);
+}
+
+.reviews-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.review-card {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-card);
+  padding: 16px;
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 10px;
+}
+
+.review-top {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--gold);
+  color: #2f260c;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+}
+
+.review-title {
+  margin: 0;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.lr-stars {
+  color: var(--gold);
+  letter-spacing: 1px;
+  font-size: 14px;
+}
+
+.review-date {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.review-body {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.reviewer-line {
+  margin: 0;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.not-found {
+  color: var(--text);
+  font-weight: 700;
+  padding: 32px 0;
+}
+
+@media (max-width: 900px) {
+  .reviews-shell {
+    padding: 20px 24px 28px;
+  }
+
+  .reviews-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 767px) {
+  .reviews-shell {
+    padding: 16px;
+  }
+}

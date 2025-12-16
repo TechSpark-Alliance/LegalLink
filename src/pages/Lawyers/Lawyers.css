@@ -1,0 +1,316 @@
+.lawyers-page {
+  --bg-1: var(--color-bg-primary);
+  --bg-2: var(--color-bg-secondary);
+  --text: #f2f6ff;
+  --muted: #c3ccdb;
+  --card: #d9d9d9;
+  --gold: var(--color-accent);
+  --pill: #6c7689;
+  --shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+  --radius-card: 16px;
+
+  min-height: 100vh;
+  background: linear-gradient(180deg, var(--color-bg-primary) 0%, var(--color-bg-secondary) 45%, #1a2438 100%);
+  color: var(--text);
+}
+
+.lawyers-shell {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: var(--space-lg) var(--space-lg) var(--space-xl);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: 32px;
+  line-height: 1.2;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.hero-sub {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 16px;
+}
+
+.filters {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.pill {
+  height: 44px;
+  border-radius: 9999px;
+  border: none;
+  background: var(--pill);
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 0 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: transform 150ms ease, filter 150ms ease;
+}
+
+.pill-input {
+  cursor: text;
+}
+
+.pill-input input {
+  border: none;
+  background: transparent;
+  color: #3a3f46;
+  font-size: 14px;
+  font-weight: 600;
+  width: 100%;
+}
+
+.pill-input input::placeholder {
+  color: #4a4f58;
+}
+
+.pill-input input:focus {
+  outline: none;
+}
+
+.pill-cta {
+  background: var(--gold);
+  color: #3b300f;
+  box-shadow: 0 10px 20px rgba(227, 195, 69, 0.35);
+}
+
+.pill-cta-short {
+  padding: 0 10px;
+}
+
+.filters .icon {
+  width: 40px;
+  height: 40px;
+}
+
+.pill:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
+.pill-input:hover {
+  transform: none;
+  filter: none;
+}
+
+.icon {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+  flex-shrink: 0;
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-top: 12px;
+}
+
+.tab {
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--muted);
+  padding: var(--space-xs) var(--space-md);
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease, transform 120ms ease;
+}
+
+.tab:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+}
+
+.tab-active {
+  background: var(--gold);
+  color: #3b300f;
+  border-color: transparent;
+  box-shadow: var(--shadow);
+}
+
+.card-grid {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 18px 16px;
+}
+
+.card-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.card-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.lawyer-card {
+  background: var(--card);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 240px;
+}
+
+.card-label {
+  padding: 10px 12px 0;
+  color: #3b3b3b;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.portrait {
+  margin: 6px 12px;
+  background: #c8c8c8;
+  border-radius: 12px;
+  overflow: hidden;
+  flex: 1 1 auto;
+  display: grid;
+  place-items: center;
+}
+
+.portrait img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.card-footer {
+  background: var(--gold);
+  color: #2c250c;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 0 0 var(--radius-card) var(--radius-card);
+}
+
+.footer-name {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.footer-location {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #2c250c;
+}
+
+.footer-location .icon {
+  width: 15px;
+  height: 15px;
+}
+
+.card-description {
+  margin: 0;
+  color: #e8eefb;
+  font-size: 14px;
+}
+
+.placeholder {
+  background: linear-gradient(180deg, #bfc1c4 0%, #cfd1d5 60%, #b5b7ba 100%);
+  position: relative;
+}
+
+.placeholder-top {
+  height: 18px;
+  background: rgba(0, 0, 0, 0.08);
+  margin: 12px;
+  border-radius: 10px;
+}
+
+.placeholder-body {
+  height: 140px;
+  margin: 0 12px;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 12px;
+}
+
+.placeholder-footer {
+  height: 46px;
+  margin: 12px;
+  background: rgba(0, 0, 0, 0.09);
+  border-radius: 12px;
+}
+
+.load-more-row {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.load-more {
+  color: var(--muted);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  transition: color 150ms ease, transform 150ms ease;
+}
+
+.load-more:hover {
+  color: var(--text);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 1023px) {
+  .lawyers-shell {
+    padding: var(--space-md) var(--space-md) var(--space-lg);
+  }
+
+  .filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tabs {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .card-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .lawyers-shell {
+    padding: var(--space-md);
+  }
+
+  .filters {
+    grid-template-columns: 1fr;
+  }
+
+  .tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .card-grid {
+    grid-template-columns: 1fr;
+  }
+}
