@@ -9,6 +9,7 @@ import LawyerHome from './pages/Home/LawyerHome';
 import Lawyers from './pages/Lawyers/Lawyers';
 import LawyerProfile from './pages/Lawyers/LawyerProfile';
 import LawyerReviews from './pages/Lawyers/LawyerReviews';
+import AppointmentBooking from './pages/Lawyers/AppointmentBooking';
 import VerifyLawyers from './pages/Admin/VerifyLawyers';
 import UserManagement from './pages/Admin/UserManagement';
 
@@ -26,6 +27,7 @@ function App() {
         <Route path="/lawyers/:id/reviews" element={<LawyerReviews />} />
         <Route path="/lawyers/:id" element={<LawyerProfile />} />
         <Route path="/lawyers" element={<Lawyers />} />
+        <Route path="/lawyer/:id/book-appointment" element={<AppointmentBooking />} />
         <Route path="/admin/lawyers" element={<VerifyLawyers />} />
         <Route path="/admin/users" element={<UserManagement />} />
       </Routes>

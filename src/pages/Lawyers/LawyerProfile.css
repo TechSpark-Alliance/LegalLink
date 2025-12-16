@@ -218,6 +218,7 @@
   justify-items: center;
   align-items: center;
   padding-right: 0;
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
 }
 
 .cta {
@@ -226,9 +227,16 @@
   border: none;
   padding: 0 38px;
   font-weight: 700;
+  font-size: 15px;
+  font-family: var(--font-family-base);
+  text-decoration: none;
   cursor: pointer;
   box-shadow: var(--shadow);
   transition: transform 150ms ease, filter 150ms ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 220px;
 }
 
 .cta:hover {
@@ -239,6 +247,7 @@
 .cta.primary {
   background: var(--gold);
   color: #2f260c;
+  text-decoration: none;
 }
 
 .cta.secondary {
@@ -281,6 +290,7 @@
 
   .cta-block {
     justify-items: stretch;
+    grid-template-columns: 1fr;
   }
 
   .cta {

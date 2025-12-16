@@ -127,15 +127,15 @@ const LawyerProfile = () => {
               <Icon type="pin" />
               <span>{lawyer.firm.address}</span>
             </div>
-            <div className="firm-line">
+          <div className="firm-line">
               <Icon type="mail" />
               <span>{lawyer.firm.email}</span>
             </div>
           </div>
           <div className="cta-block">
-            <button type="button" className="cta primary">
+            <Link to={`/lawyer/${lawyer.id}/book-appointment`} className="cta primary">
               Book appointment
-            </button>
+            </Link>
             <button type="button" className="cta secondary">
               Have a quick chat
             </button>

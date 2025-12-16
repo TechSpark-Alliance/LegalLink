@@ -10,7 +10,7 @@ const links = [
   { to: '/conversations', label: 'Conversations' },
 ];
 
-const NavBar = () => {
+const NavBar = ({ forceActive }) => {
   return (
     <header className={styles.shell}>
       <div className={styles.brand}>
@@ -26,7 +26,11 @@ const NavBar = () => {
               key={link.to}
               to={link.to}
               className={({ isActive }) =>
-                `${styles.link}${isActive ? ` ${styles.active}` : ''}`
+                `${styles.link}${
+                  isActive || (forceActive && link.to.startsWith(forceActive))
+                    ? ` ${styles.active}`
+                    : ''
+                }`
               }
             >
               {link.label}
