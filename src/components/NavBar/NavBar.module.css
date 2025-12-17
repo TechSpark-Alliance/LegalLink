@@ -83,6 +83,10 @@
   font-weight: 600;
 }
 
+.profileWrapper {
+  position: relative;
+}
+
 .avatar {
   width: 36px;
   height: 36px;
@@ -97,6 +101,61 @@
 .profileName {
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
+}
+
+.menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  background: rgba(23, 32, 42, 0.98);
+  border: 1px solid rgba(232, 219, 209, 0.16);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.32);
+  padding: var(--space-xs);
+  width: 220px;
+  display: grid;
+  gap: 4px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-6px);
+  max-height: 0;
+  overflow: hidden;
+  transition: opacity 180ms ease, transform 180ms ease, max-height 200ms ease;
+}
+
+.menuOpen {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+  max-height: 360px;
+}
+
+.menuItem {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: var(--color-text-primary);
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+
+.menuItem:hover {
+  background: rgba(227, 195, 69, 0.14);
+  color: var(--color-text-primary);
+}
+
+.menuDivider {
+  height: 1px;
+  background: rgba(232, 219, 209, 0.12);
+  margin: 2px 0;
+}
+
+.signOut {
+  color: #f87171;
 }
 
 @media (max-width: 900px) {
