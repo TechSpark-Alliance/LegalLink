@@ -1,230 +1,209 @@
-﻿import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import './ClientHome.css';
-import ClientNavbar from '../../components/ClientNavbar';
+import React from 'react';
+import NavBar from '../../components/NavBar/NavBar';
+import Hero from '../../components/Hero/Hero';
+import FeatureCard from '../../components/FeatureCard/FeatureCard';
+import InfoPanel from '../../components/InfoPanel/InfoPanel';
+import styles from './ClientHome.module.css';
+import lawyerImg from '../../assets/lawyer1.png';
 
-const expertiseCategories = [
-  { key: 'all', label: 'Popular' },
-  { key: 'litigation', label: 'Litigation' },
-  { key: 'corporate', label: 'Corporate' },
-  { key: 'family', label: 'Family' },
-  { key: 'criminal', label: 'Criminal' },
-  { key: 'employment', label: 'Employment' },
-  { key: 'ip', label: 'Intellectual Property' },
-  { key: 'tax', label: 'Tax' },
-  { key: 'real-estate', label: 'Real Estate' },
-  { key: 'immigration', label: 'Immigration' },
-  { key: 'other', label: 'Other' },
+const getStoredUserName = () => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem('ll_user');
+    if (!raw) return null;
+    const user = JSON.parse(raw);
+    return user.full_name || user.fullName || user.name || user.email || null;
+  } catch {
+    return null;
+  }
+};
+
+const featureCards = [
+  {
+    title: 'Find the right lawyer',
+    description: 'Browse specialties, review profiles, and match with verified experts tailored to your case.',
+    icon: 'F',
+  },
+  {
+    title: 'Schedule appointments',
+    description: 'Securely book consultations that fit your calendar with instant confirmations.',
+    icon: 'S',
+  },
+  {
+    title: 'Conversations in one place',
+    description: 'Keep every message, document, and update organized in your secure client inbox.',
+    icon: 'C',
+  },
+  {
+    title: 'Track your matters',
+    description: 'Stay on top of tasks, deadlines, and outcomes with clear timelines and reminders.',
+    icon: 'T',
+  },
 ];
 
-export default function ClientHome() {
-  const navigate = useNavigate();
-  const [userName, setUserName] = useState('Profile');
-  const [lawyers, setLawyers] = useState([]);
-  const [filteredLawyers, setFilteredLawyers] = useState([]);
-  const [locationQuery, setLocationQuery] = useState('');
-  const [practiceQuery, setPracticeQuery] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [activeCategory, setActiveCategory] = useState('all');
+const panels = [
+  {
+    title: 'Upcoming matters',
+    description: 'View the latest appointments, milestones, and shared documents from your legal team.',
+    tone: 'dark',
+  },
+  {
+    title: 'Case brief',
+    description: 'A concise overview of recent activity, notes, and next steps for your active cases.',
+    tone: 'darker',
+  },
+  {
+    title: 'Secure archive',
+    description: 'All past conversations, files, and invoices preserved with audit-ready history.',
+    tone: 'darkest',
+  },
+];
 
-  useEffect(() => {
-    const role = localStorage.getItem('role') || sessionStorage.getItem('role');
-    if (role && role !== 'client') {
-      navigate('/login', { replace: true });
-      return;
-    }
-    let name = '';
-    try {
-      const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
-      if (storedUser && storedUser !== 'undefined') {
-        const parsed = JSON.parse(storedUser);
-        name = parsed?.full_name || parsed?.fullName || parsed?.email || '';
-      }
-    } catch (_) {
-      /* ignore parse errors */
-    }
-    if (!name) {
-      name = localStorage.getItem('full_name') || sessionStorage.getItem('full_name') || 'Profile';
-    }
-    setUserName(name);
-  }, [navigate]);
+const lawyerTabs = [
+  { label: 'Popular', active: true },
+  { label: 'Family & Personal Matters' },
+  { label: 'Business & Corporate' },
+  { label: 'Property & Real Estate' },
+];
 
-  const apiBase = import.meta.env.VITE_APP_API || 'http://localhost:8000/api/v1';
-  const apiRoot = (() => {
-    try {
-      const url = new URL(apiBase);
-      const path = url.pathname.replace(/\/api\/v1\/?$/, '') || '';
-      url.pathname = path;
-      return url.origin + url.pathname;
-    } catch {
-      return apiBase.replace(/\/api\/v1$/, '');
-    }
-  })();
+const lawyers = [
+  { name: 'Krystal Jung', location: 'Kuala Lumpur, Malaysia', featured: true, image: lawyerImg },
+  { name: 'Placeholder', location: '---', featured: false },
+  { name: 'Placeholder', location: '---', featured: false },
+  { name: 'Placeholder', location: '---', featured: false },
+];
 
-  useEffect(() => {
-    const fetchLawyers = async () => {
-      setLoading(true);
-      setError('');
-      try {
-        const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
-        const res = await fetch(${apiBase}/auth/admin/users?role=lawyer&status=verified&limit=12, {
-          headers: token ? { Authorization: Bearer  } : {},
-        });
-        if (!res.ok) throw new Error('Unable to load lawyers');
-        const data = await res.json();
-        const list = Array.isArray(data.items) ? data.items : [];
-        setLawyers(list);
-        setFilteredLawyers(list);
-      } catch (err) {
-        setError(err.message || 'Unable to load lawyers');
-        setLawyers([]);
-        setFilteredLawyers([]);
-      } finally {
-        setLoading(false);
-      }
-    };
+const reviews = [
+  {
+    title: 'Family dispute mediation',
+    rating: 5,
+    headline: 'Empathetic and precise guidance.',
+    text: 'Ava walked me through each step and kept communication clear and timely.',
+  },
+  {
+    title: 'Business contract review',
+    rating: 4,
+    headline: 'Responsive and detailed.',
+    text: 'Quick turnaround with practical recommendations that protected our interests.',
+  },
+  {
+    title: 'Property settlement',
+    rating: 5,
+    headline: 'Professional and reassuring.',
+    text: 'Made a complex process feel manageable and secure.',
+  },
+];
 
-    fetchLawyers();
-  }, [apiBase]);
-
-  const formatLocation = (lawyer) => {
-    const city = lawyer.city || '';
-    const state = lawyer.state || '';
-    const parts = [city, state].filter(Boolean);
-    return parts.join(', ') || 'Location';
-  };
-
-  const formatExpertise = (lawyer) => {
-    if (Array.isArray(lawyer.expertise) && lawyer.expertise.length) return lawyer.expertise.join(', ');
-    if (typeof lawyer.expertise === 'string' && lawyer.expertise.trim()) return lawyer.expertise;
-    return 'General practice';
-  };
-
-  const buildPhoto = (lawyer) => {
-    const raw = lawyer.profile_image || '';
-    if (!raw) return '';
-    if (raw.startsWith('http')) return raw;
-    const prefix = apiRoot.endsWith('/') ? apiRoot.slice(0, -1) : apiRoot;
-    const path = raw.startsWith('/') ? raw : /;
-    return ${prefix};
-  };
-
-  const applyFilters = (categoryKey) => {
-    const loc = locationQuery.trim().toLowerCase();
-    const prac = practiceQuery.trim().toLowerCase();
-    const cat = categoryKey ?? activeCategory;
-    const next = lawyers.filter((lawyer) => {
-      const locationText = formatLocation(lawyer).toLowerCase();
-      const practiceText = formatExpertise(lawyer).toLowerCase();
-      const expertiseList = Array.isArray(lawyer.expertise)
-        ? lawyer.expertise.map((v) => String(v).toLowerCase())
-        : String(lawyer.expertise || '')
-            .toLowerCase()
-            .split(',')
-            .map((v) => v.trim())
-            .filter(Boolean);
-      const matchLoc = loc ? locationText.includes(loc) : true;
-      const matchPrac = prac ? practiceText.includes(prac) : true;
-      const matchCategory = cat === 'all' ? true : expertiseList.some((v) => v === cat || practiceText.includes(cat));
-      return matchLoc && matchPrac && matchCategory;
-    });
-    setFilteredLawyers(next);
-  };
-
+const ClientHome = () => {
+  const userName = getStoredUserName() || 'Valued Client';
   return (
-    <div className="client-shell">
-      <ClientNavbar activeKey="lawyers" />
+    <div className={styles.page}>
+      <NavBar />
+      <main className={styles.main}>
+        <div className={styles.greeting}>
+          <span className={styles.greetingPill}>Welcome back, {userName}</span>
+        </div>
+        <Hero />
 
-      <main className="client-body">
-        <section className="hero-card">
-          <h2>Welcome {userName || 'User'}, what are you looking for today?</h2>
-          <p>Secure your peace of mind - consult with our top lawyers today!</p>
-          <div className="hero-actions">
-            <div className="search-pill input-pill">
-              <span className="pill-icon" aria-hidden="true">S</span>
-              <input
-                type="text"
-                placeholder="By location"
-                value={locationQuery}
-                onChange={(e) => setLocationQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    applyFilters();
-                  }
-                }}
-              />
+        <section className={styles.topLawyers}>
+          <div className={styles.sectionHead}>
+            <h2>Top Lawyers</h2>
+            <div className={styles.explore}>
+              <span className={styles.searchIcon} aria-hidden="true" />
+              <span>Explore more</span>
             </div>
-            <div className="search-pill input-pill">
-              <span className="pill-icon" aria-hidden="true">P</span>
-              <input
-                type="text"
-                placeholder="Area of practice"
-                value={practiceQuery}
-                onChange={(e) => setPracticeQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    applyFilters();
-                  }
-                }}
-              />
-            </div>
-            <button className="primary-pill" onClick={() => applyFilters()}>
-              Explore more
-            </button>
+          </div>
+          <div className={styles.tabRow}>
+            {lawyerTabs.map((tab) => (
+              <button
+                type="button"
+                key={tab.label}
+                className={`${styles.tab} ${tab.active ? styles.tabActive : ''}`}
+                aria-pressed={tab.active}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+          <div className={styles.lawyerGrid}>
+            {lawyers.map((lawyer, index) => (
+              <article
+                key={lawyer.name + index}
+                className={`${styles.lawyerCard} ${lawyer.featured ? styles.featured : ''}`}
+              >
+                <div
+                  className={`${styles.lawyerImage} ${lawyer.image ? styles.hasImage : ''}`}
+                  style={lawyer.image ? { backgroundImage: `url(${lawyer.image})` } : undefined}
+                  aria-hidden="true"
+                >
+                  {lawyer.featured ? <span className={styles.overlayName}>{lawyer.name}</span> : 'Placeholder'}
+                  {lawyer.featured && <span className={styles.overlayLocation}>{lawyer.location}</span>}
+                </div>
+              </article>
+            ))}
           </div>
         </section>
 
-        <div className="category-row">
-          {expertiseCategories.map((cat) => (
-            <button
-              key={cat.key}
-              className={`category-pill ${activeCategory === cat.key ? 'active' : ''}`}
-              onClick={() => {
-                setActiveCategory(cat.key);
-                applyFilters(cat.key);
-              }}
-            >
-              {cat.label}
-            </button>
-          ))}
-        </div>
+        <section className={styles.reviews}>
+          <div className={styles.sectionHead}>
+            <h2>Service Reviews</h2>
+          </div>
+          <div className={styles.reviewGrid}>
+            {reviews.map((review, index) => (
+              <article key={review.title + index} className={styles.reviewCard}>
+                <div className={styles.reviewTop}>
+                  <span className={styles.avatar} aria-hidden="true">
+                    {review.title.slice(0, 1)}
+                  </span>
+                  <div>
+                    <p className={styles.reviewTitle}>{review.title}</p>
+                    <div className={styles.stars} aria-label={`${review.rating} star rating`}>
+                      {'★'.repeat(review.rating)}
+                    </div>
+                  </div>
+                </div>
+                <p className={styles.reviewHeadline}>{review.headline}</p>
+                <p className={styles.reviewText}>{review.text}</p>
+              </article>
+            ))}
+          </div>
+        </section>
 
-        <section className="cards-grid">
-          {loading && <p className="muted">Loading lawyers...</p>}
-          {!loading && error && <p className="error">{error}</p>}
-          {!loading && !error && lawyers.length === 0 && <p className="muted">No lawyers available yet.</p>}
-          {!loading &&
-            !error &&
-            filteredLawyers.map((lawyer) => {
-              const photo = buildPhoto(lawyer);
-              const location = formatLocation(lawyer);
-              const practice = formatExpertise(lawyer);
-              return (
-                <article
-                  className="lawyer-card wide"
-                  key={lawyer._id || lawyer.id || lawyer.email}
-                  onClick={() =>
-                    navigate(`/lawyers/${lawyer._id || lawyer.id || lawyer.email}`, {
-                      state: { lawyer },
-                    })
-                  }
-                >
-                  <div className="card-photo">
-                    {photo ? <img src={photo} alt={lawyer.full_name || lawyer.email || 'Lawyer'} /> : <div className="photo-placeholder" />}
-                  </div>
-                  <div className="card-footer">
-                    <div className="card-name">{lawyer.full_name || lawyer.email || 'Name'}</div>
-                    <div className="card-location">Location: {location}</div>
-                    <div className="card-practice">{practice}</div>
-                  </div>
-                </article>
-              );
-            })}
+        <section className={styles.ctaBand}>
+          <div className={styles.ctaPill}>Start a new request</div>
+          <div className={styles.ctaSub}>Connect with your legal team in seconds.</div>
+        </section>
+
+        <section className={styles.featureGrid}>
+          {featureCards.map((card) => (
+            <FeatureCard key={card.title} {...card} />
+          ))}
+        </section>
+
+        <section className={styles.infoGrid}>
+          <InfoPanel {...panels[0]} />
+          <InfoPanel {...panels[1]} />
+        </section>
+
+        <section className={styles.infoWide}>
+          <InfoPanel {...panels[2]} />
         </section>
       </main>
+      <footer className={styles.footer}>
+        <div className={styles.footerBrand}>LEGALLINK</div>
+        <div className={styles.footerSocial}>
+          <span>Follow us on</span>
+          <span className={styles.socialIcon} aria-hidden="true" />
+          <span className={styles.socialIcon} aria-hidden="true" />
+          <span className={styles.socialIcon} aria-hidden="true" />
+        </div>
+        <div className={styles.footerLinks}>
+          <a href="/">About Us</a>
+          <a href="/">Our company</a>
+        </div>
+      </footer>
     </div>
   );
-}
+};
+
+export default ClientHome;

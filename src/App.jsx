@@ -7,21 +7,13 @@ import LawyerRegister from './pages/Authentication/Lawyer/LawyerRegister';
 import ClientHome from './pages/Home/ClientHome';
 import LawyerHome from './pages/Home/LawyerHome';
 import Lawyers from './pages/Lawyers/Lawyers';
+import LawyerProfile from './pages/Lawyers/LawyerProfile';
 import LawyerReviews from './pages/Lawyers/LawyerReviews';
 import AppointmentBooking from './pages/Lawyers/AppointmentBooking';
-import Appointment from './pages/Appointment/Appointment';
-import Conversations from './pages/Conversations/Conversations';
 import VerifyLawyers from './pages/Admin/VerifyLawyers';
 import UserManagement from './pages/Admin/UserManagement';
-import CreateCase from './pages/Cases/CreateCase';
-import CaseDetail from './pages/Cases/CaseDetail';
-import ClientsList from './pages/Clients/ClientsList';
-import ClientDetail from './pages/Clients/ClientDetail';
-import LawyerProfilePrivate from './pages/Profile/LawyerProfile';
-import ClientProfile from './pages/Profile/ClientProfile';
-import RequireLawyer from './components/RequireLawyer';
-import RequireClient from './components/RequireClient';
-import LawyerDetail from './pages/Home/LawyerDetail';
+import Appointment from './pages/Appointment/Appointment';
+import Conversations from './pages/Conversations/Conversations';
 
 function App() {
   return (
@@ -32,119 +24,15 @@ function App() {
         <Route path="/register" element={<RegisterRole />} />
         <Route path="/register/client" element={<ClientRegister />} />
         <Route path="/register/lawyer" element={<LawyerRegister />} />
-        <Route
-          path="/home/client"
-          element={
-            <RequireClient>
-              <ClientHome />
-            </RequireClient>
-          }
-        />
-        <Route
-          path="/profile/client"
-          element={
-            <RequireClient>
-              <ClientProfile />
-            </RequireClient>
-          }
-        />
-        <Route
-          path="/lawyers"
-          element={
-            <RequireClient>
-              <Lawyers />
-            </RequireClient>
-          }
-        />
-        <Route
-          path="/lawyers/:id"
-          element={
-            <RequireClient>
-              <LawyerDetail />
-            </RequireClient>
-          }
-        />
-        <Route
-          path="/lawyers/:id/reviews"
-          element={
-            <RequireClient>
-              <LawyerReviews />
-            </RequireClient>
-          }
-        />
-        <Route
-          path="/lawyer/:id/book-appointment"
-          element={
-            <RequireClient>
-              <AppointmentBooking />
-            </RequireClient>
-          }
-        />
-        <Route
-          path="/appointment"
-          element={
-            <RequireClient>
-              <Appointment />
-            </RequireClient>
-          }
-        />
+        <Route path="/home/client" element={<ClientHome />} />
+        <Route path="/home/lawyer" element={<LawyerHome />} />
+        <Route path="/lawyers/:id/reviews" element={<LawyerReviews />} />
+        <Route path="/lawyers/:id" element={<LawyerProfile />} />
+        <Route path="/lawyers" element={<Lawyers />} />
+        <Route path="/lawyer/:id/book-appointment" element={<AppointmentBooking />} />
+        <Route path="/appointment" element={<Appointment />} />
         <Route path="/conversations" element={<Conversations />} />
         <Route path="/conversation/chat/:chatId/lawyer/:lawyerId" element={<Conversations />} />
-        <Route
-          path="/lawyer/cases"
-          element={
-            <RequireLawyer>
-              <LawyerHome />
-            </RequireLawyer>
-          }
-        />
-        <Route
-          path="/lawyer/cases/new"
-          element={
-            <RequireLawyer>
-              <CreateCase />
-            </RequireLawyer>
-          }
-        />
-        <Route
-          path="/lawyer/cases/:id"
-          element={
-            <RequireLawyer>
-              <CaseDetail />
-            </RequireLawyer>
-          }
-        />
-        <Route
-          path="/lawyer/clients"
-          element={
-            <RequireLawyer>
-              <ClientsList />
-            </RequireLawyer>
-          }
-        />
-        <Route
-          path="/lawyer/clients/:id"
-          element={
-            <RequireLawyer>
-              <ClientDetail />
-            </RequireLawyer>
-          }
-        />
-        <Route
-          path="/lawyer/profile"
-          element={
-            <RequireLawyer>
-              <LawyerProfilePrivate />
-            </RequireLawyer>
-          }
-        />
-        {/* legacy redirects */}
-        <Route path="/home/lawyer" element={<Navigate to="/lawyer/cases" replace />} />
-        <Route path="/cases/new" element={<Navigate to="/lawyer/cases/new" replace />} />
-        <Route path="/cases/:id" element={<Navigate to="/lawyer/cases/:id" replace />} />
-        <Route path="/cases" element={<Navigate to="/lawyer/cases" replace />} />
-        <Route path="/clients/:id" element={<Navigate to="/lawyer/clients/:id" replace />} />
-        <Route path="/clients" element={<Navigate to="/lawyer/clients" replace />} />
         <Route path="/admin/lawyers" element={<VerifyLawyers />} />
         <Route path="/admin/users" element={<UserManagement />} />
       </Routes>
