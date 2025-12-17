@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './ClientHome.css';
-import logo from '../../assets/legal-link-logo.png';
+import ClientNavbar from '../../components/ClientNavbar';
 
 const NAV_ITEMS = [
   { key: 'home', label: 'Home', path: '/home/client' },
@@ -95,25 +95,6 @@ export default function ClientHome() {
     fetchLawyers();
   }, [apiBase]);
 
-  const handleLogout = async () => {
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-    try {
-      if (token) {
-        await fetch(`${apiBase}/auth/user/logout`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token }),
-        });
-      }
-    } catch (_) {
-      /* ignore */
-    } finally {
-      localStorage.clear();
-      sessionStorage.clear();
-      navigate('/login');
-    }
-  };
-
   const formatLocation = (lawyer) => {
     const city = lawyer.city || '';
     const state = lawyer.state || '';
@@ -159,40 +140,7 @@ export default function ClientHome() {
 
   return (
     <div className="client-shell">
-      <header className="client-top">
-        <div className="client-brand">
-          <img src={logo} alt="LegalLink" className="brand-logo" />
-          <span className="brand-name">LegalLink</span>
-        </div>
-        <nav className="client-nav">
-          {NAV_ITEMS.map((item) => (
-            <button
-              key={item.key}
-              className={`nav-link ${item.key === 'lawyers' ? 'active' : ''}`}
-              onClick={() => navigate(item.path)}
-            >
-              {item.label}
-            </button>
-          ))}
-        </nav>
-        <div className="profile-wrapper">
-          <button
-            className="profile-badge"
-            onClick={() => setMenuOpen((o) => !o)}
-            aria-haspopup="true"
-            aria-expanded={menuOpen}
-          >
-            <div className="avatar">{(userName || 'P').charAt(0)}</div>
-            <span className="profile-name">{userName}</span>
-          </button>
-          {menuOpen && (
-            <div className="profile-menu" role="menu">
-              <button className="profile-menu__item" onClick={() => navigate('/profile/client')}>Profile</button>
-              <button className="profile-menu__item" onClick={handleLogout}>Logout</button>
-            </div>
-          )}
-        </div>
-      </header>
+      <ClientNavbar activeKey="lawyers" />
 
       <main className="client-body">
         <section className="hero-card">
@@ -259,7 +207,15 @@ export default function ClientHome() {
               const location = formatLocation(lawyer);
               const practice = formatExpertise(lawyer);
               return (
-                <article className="lawyer-card wide" key={lawyer._id || lawyer.id || lawyer.email}>
+                <article
+                  className="lawyer-card wide"
+                  key={lawyer._id || lawyer.id || lawyer.email}
+                  onClick={() =>
+                    navigate(`/lawyers/${lawyer._id || lawyer.id || lawyer.email}`, {
+                      state: { lawyer },
+                    })
+                  }
+                >
                   <div className="card-photo">
                     {photo ? <img src={photo} alt={lawyer.full_name || 'Lawyer'} /> : <div className="photo-placeholder" />}
                   </div>

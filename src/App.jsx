@@ -16,6 +16,7 @@ import LawyerProfile from './pages/Profile/LawyerProfile';
 import ClientProfile from './pages/Profile/ClientProfile';
 import RequireLawyer from './components/RequireLawyer';
 import RequireClient from './components/RequireClient';
+import LawyerDetail from './pages/Home/LawyerDetail';
 
 function App() {
   return (
@@ -39,6 +40,14 @@ function App() {
           element={
             <RequireClient>
               <ClientProfile />
+            </RequireClient>
+          }
+        />
+        <Route
+          path="/lawyers/:id"
+          element={
+            <RequireClient>
+              <LawyerDetail />
             </RequireClient>
           }
         />

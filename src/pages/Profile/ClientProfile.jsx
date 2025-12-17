@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../Clients/ClientsList.css';
 import './LawyerProfile.css';
-import logo from '../../assets/legal-link-logo.png';
+import ClientNavbar from '../../components/ClientNavbar';
 
 const NAV_ITEMS = [
   { key: 'home', label: 'Home', path: '/home/client' },
@@ -26,10 +26,6 @@ export default function ClientProfile() {
 
   const apiBase = import.meta.env.VITE_APP_API || 'http://localhost:8000/api/v1';
   const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
-  const clientName =
-    localStorage.getItem('full_name') ||
-    sessionStorage.getItem('full_name') ||
-    'Profile';
 
   const fetchProfile = async () => {
     setLoading(true);
@@ -132,40 +128,7 @@ export default function ClientProfile() {
 
   return (
     <div className="profile-shell">
-      <header className="clients-header">
-        <div className="clients-brand">
-          <img src={logo} alt="LegalLink" className="brand-logo" />
-          <span className="brand-name">LegalLink</span>
-        </div>
-        <nav className="clients-nav">
-          {NAV_ITEMS.map((item) => (
-            <button
-              key={item.key}
-              className={`nav-link ${item.key === 'home' ? 'active' : ''}`}
-              onClick={() => navigate(item.path)}
-            >
-              {item.label}
-            </button>
-          ))}
-        </nav>
-        <div className="profile-wrapper">
-          <button
-            className="profile-badge"
-            onClick={() => setMenuOpen((o) => !o)}
-            aria-haspopup="true"
-            aria-expanded={menuOpen}
-          >
-            <div className="avatar">{(clientName || 'P').charAt(0)}</div>
-            <span className="profile-name">{clientName}</span>
-          </button>
-          {menuOpen && (
-            <div className="profile-menu" role="menu">
-              <button className="profile-menu__item" onClick={() => navigate('/profile/client')}>Profile</button>
-              <button className="profile-menu__item" onClick={handleLogout}>Logout</button>
-            </div>
-          )}
-        </div>
-      </header>
+      <ClientNavbar activeKey="home" />
 
       <div className="profile-card">
         <div className="profile-header-row">
