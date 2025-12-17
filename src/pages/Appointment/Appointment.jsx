@@ -457,16 +457,14 @@ const Appointment = () => {
         {showDetails && (
           <>
             <section className={styles.primaryCard}>
-              <div className={styles.statusRow}>
-                <div className={styles.actions}>
-                  <button
-                    type="button"
-                    className={`${styles.primaryBtn} ${!canReschedule ? styles.btnDisabled : ''}`}
-                    onClick={() => setIsRescheduleOpen(true)}
-                    disabled={!canReschedule}
-                  >
-                    Reschedule
-                  </button>
+              <AppointmentHero
+                data={appointment}
+                rescheduleDeadline={rescheduleDeadline}
+                canReschedule={canReschedule}
+              />
+
+              <div className={styles.rescheduleBar}>
+                <div className={styles.rescheduleCopy}>
                   {!canReschedule && (
                     <p className={styles.rescheduleWarning}>
                       Rescheduling is closed. You can only reschedule at least 7 days before the appointment starts - Deadline: {formatDateTime(rescheduleDeadline)}
@@ -478,13 +476,17 @@ const Appointment = () => {
                     </p>
                   )}
                 </div>
+                <div className={styles.rescheduleActions}>
+                  <button
+                    type="button"
+                    className={`${styles.primaryBtn} ${!canReschedule ? styles.btnDisabled : ''}`}
+                    onClick={() => setIsRescheduleOpen(true)}
+                    disabled={!canReschedule}
+                  >
+                    Reschedule
+                  </button>
+                </div>
               </div>
-
-              <AppointmentHero
-                data={appointment}
-                rescheduleDeadline={rescheduleDeadline}
-                canReschedule={canReschedule}
-              />
             </section>
 
             <section className={styles.supportingGrid}>

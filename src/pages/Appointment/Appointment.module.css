@@ -194,14 +194,6 @@
   gap: var(--space-md);
 }
 
-.statusRow {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--space-md);
-  align-items: center;
-  flex-wrap: wrap;
-}
-
 .statusGroup {
   display: inline-flex;
   align-items: center;
@@ -220,6 +212,23 @@
   gap: var(--space-xs);
   align-items: flex-end;
   margin-left: auto;
+}
+
+.rescheduleBar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--space-md);
+  width: 100%;
+}
+
+.rescheduleCopy {
+  text-align: right;
+}
+
+.rescheduleActions {
+  display: flex;
+  align-items: center;
 }
 
 .primaryBtn {
@@ -271,11 +280,13 @@
   padding: 10px 12px;
   font-size: var(--font-size-xs);
   max-width: 520px;
+  text-align: right;
 }
 
 .rescheduleHelper {
   color: var(--color-text-secondary);
   font-size: var(--font-size-xs);
+  text-align: right;
 }
 
 .hero {
@@ -710,11 +721,6 @@
     padding: var(--space-lg) var(--space-md) var(--space-xl);
   }
 
-  .statusRow {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
   .heroMain {
     flex-direction: column;
     align-items: flex-start;
@@ -726,6 +732,21 @@
 
   .actions {
     width: 100%;
+    align-items: flex-start;
+  }
+
+  .rescheduleBar {
+    justify-content: flex-start;
+    gap: var(--space-sm);
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .rescheduleCopy {
+    text-align: left;
+  }
+
+  .rescheduleActions {
     align-items: flex-start;
   }
 

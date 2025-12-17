@@ -13,6 +13,7 @@ import AppointmentBooking from './pages/Lawyers/AppointmentBooking';
 import VerifyLawyers from './pages/Admin/VerifyLawyers';
 import UserManagement from './pages/Admin/UserManagement';
 import Appointment from './pages/Appointment/Appointment';
+import Conversations from './pages/Conversations/Conversations';
 
 function App() {
   return (
@@ -30,6 +31,8 @@ function App() {
         <Route path="/lawyers" element={<Lawyers />} />
         <Route path="/lawyer/:id/book-appointment" element={<AppointmentBooking />} />
         <Route path="/appointment" element={<Appointment />} />
+        <Route path="/conversations" element={<Conversations />} />
+        <Route path="/conversation/chat/:chatId/lawyer/:lawyerId" element={<Conversations />} />
         <Route path="/admin/lawyers" element={<VerifyLawyers />} />
         <Route path="/admin/users" element={<UserManagement />} />
       </Routes>
