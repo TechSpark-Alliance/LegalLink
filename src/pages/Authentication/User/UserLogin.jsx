@@ -52,9 +52,20 @@ const UserLogin = () => {
         throw new Error(data.detail || 'Login failed');
       }
       const data = await res.json();
+      const safeUser = data?.user || {};
+      const session = data?.session || {};
+      try {
+        localStorage.setItem('user', JSON.stringify(safeUser));
+        if (safeUser.full_name) localStorage.setItem('full_name', safeUser.full_name);
+        if (safeUser.role) localStorage.setItem('role', safeUser.role);
+        if (safeUser.id) localStorage.setItem('user_id', safeUser.id);
+        if (session.token) localStorage.setItem('token', session.token);
+      } catch (_) {
+        /* ignore storage failures */
+      }
       const role = data?.user?.role;
       if (role === 'lawyer') {
-        navigate('/home/lawyer');
+        navigate('/lawyer/cases');
       } else {
         navigate('/home/client');
       }
