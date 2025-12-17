@@ -52,16 +52,21 @@ const UserLogin = () => {
         throw new Error(data.detail || 'Login failed');
       }
       const data = await res.json();
-      if (data?.user) {
-        try {
-          localStorage.setItem('ll_user', JSON.stringify(data.user));
-        } catch (err) {
-          console.warn('Failed to cache user profile', err);
-        }
+      const safeUser = data?.user || {};
+      const session = data?.session || {};
+      try {
+        localStorage.setItem('ll_user', JSON.stringify(safeUser));
+        localStorage.setItem('user', JSON.stringify(safeUser));
+        if (safeUser.full_name) localStorage.setItem('full_name', safeUser.full_name);
+        if (safeUser.role) localStorage.setItem('role', safeUser.role);
+        if (safeUser.id) localStorage.setItem('user_id', safeUser.id);
+        if (session.token) localStorage.setItem('token', session.token);
+      } catch (err) {
+        console.warn('Failed to cache user profile', err);
       }
       const role = data?.user?.role;
       if (role === 'lawyer') {
-        navigate('/home/lawyer');
+        navigate('/lawyer/cases');
       } else {
         navigate('/home/client');
       }
@@ -151,7 +156,7 @@ const UserLogin = () => {
             </Link>
           </p>
 
-          <p className="signin-footer">© 2025 Copyright LegalLink. All rights reserved.</p>
+          <p className="signin-footer">(c) 2025 Copyright LegalLink. All rights reserved.</p>
         </section>
 
         <section className="auth-fluid-right legallink-hero-panel">
@@ -161,7 +166,7 @@ const UserLogin = () => {
               <p className="hero-eyebrow">Empowering Access to Legal Expertise</p>
               <h2>Find the right lawyer when you need one most.</h2>
               <p className="hero-quote">
-                “LegalLink makes it easy to find the right lawyer when you need one most.”
+                "LegalLink makes it easy to find the right lawyer when you need one most."
               </p>
             </div>
           </div>
