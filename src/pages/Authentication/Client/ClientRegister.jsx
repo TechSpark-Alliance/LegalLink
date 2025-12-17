@@ -112,7 +112,6 @@ const ClientRegister = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
-  const progressWidth = currentStep === 1 ? '50%' : '100%';
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -193,22 +192,22 @@ const ClientRegister = () => {
                 <span className="step-label">Finish</span>
               </div>
             </div>
-            <div className="client-progress-bar">
-              <div className="client-progress-fill" style={{ width: progressWidth }} />
+            <div className="progress-bar">
+              <div className="progress-fill" style={{ width: currentStep === 1 ? '50%' : '100%' }} />
             </div>
           </div>
 
           <form className="signin-form client-form" onSubmit={handleSubmit}>
             {currentStep === 1 && (
               <section className="section-card">
-                <div className="section-head inline-head">
-                  <p className="section-label section-label-inline">
-                    <span className="section-icon" aria-hidden="true">
-                      <PersonIcon />
-                    </span>
-                    Account Information
-                  </p>
-                  <p className="section-subtitle">Create your secure account credentials</p>
+                <div className="section-head">
+                  <span className="section-icon" aria-hidden="true">
+                    <PersonIcon />
+                  </span>
+                  <div>
+                    <p className="section-label">Account Information</p>
+                    <p className="section-subtitle">Create your secure account credentials</p>
+                  </div>
                 </div>
 
                 <div className="form-row">
@@ -404,11 +403,11 @@ const ClientRegister = () => {
                 </button>
               )}
               <button
-                type="submit"
-                className="ctbutton"
+                type={currentStep === 1 ? 'submit' : 'submit'}
+                className="cta-button"
                 disabled={currentStep === 2 && !termsAccepted}
               >
-                {currentStep === 1 ? 'Next >' : (
+                {currentStep === 1 ? 'Next' : (
                   <>
                     <SubmitIcon /> Submit Registration
                   </>
@@ -443,5 +442,4 @@ const ClientRegister = () => {
 };
 
 export default ClientRegister;
-
 

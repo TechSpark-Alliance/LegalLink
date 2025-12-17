@@ -1,0 +1,54 @@
+.card {
+  background: var(--color-surface-strong);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  box-shadow: var(--shadow-card);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background: rgba(227, 195, 69, 0.25);
+  display: grid;
+  place-items: center;
+}
+
+.iconGlyph {
+  width: 32px;
+  height: 32px;
+  background: var(--color-accent);
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.18);
+  font-weight: 800;
+  color: var(--color-text-dark);
+  font-size: 16px;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  align-items: center;
+  text-align: center;
+}
+
+.title {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  color: var(--color-text-dark);
+}
+
+.description {
+  margin: 0;
+  color: #4d4d4d;
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-base);
+}
