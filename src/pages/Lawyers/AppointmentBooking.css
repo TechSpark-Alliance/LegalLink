@@ -500,7 +500,7 @@ textarea:focus {
 
 .receipt-card {
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(232, 219, 209, 0.22);
+  border: none;
   border-radius: 12px;
   padding: 12px 14px;
   display: flex;

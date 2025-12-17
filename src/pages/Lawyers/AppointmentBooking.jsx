@@ -36,11 +36,6 @@ const latestStartByDuration = {
   60: 16,
   90: 15.5,
 };
-const mockClient = {
-  name: 'Alicia Tan (Client)',
-  email: 'alicia.tan@example.com',
-  phone: '+60 12-345 6789',
-};
 const mockLawyer = {
   name: 'Krystal Jung',
   email: 'krystal.jung@jungandco.my',
@@ -66,6 +61,32 @@ const formatTime = (slot) => {
   const labelHours = hours % 12 || 12;
   const period = hours >= 12 ? 'PM' : 'AM';
   return `${labelHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+};
+
+const getStoredUser = () => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem('ll_user');
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+};
+
+const splitLocation = (location) => {
+  if (!location) return { name: 'Not provided', address: '' };
+  const [name, ...rest] = location.split(' - ');
+  return { name: name || location, address: rest.join(' - ') || '' };
+};
+
+const makeReference = () => {
+  const now = new Date();
+  const ref = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now
+    .getDate()
+    .toString()
+    .padStart(2, '0')}${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}`;
+  return `LL-${ref}`;
 };
 
 const buildSlots = () => {
@@ -103,6 +124,14 @@ const AppointmentBooking = () => {
   const [receipt, setReceipt] = useState(null);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const bookingPath = id ? `/lawyer/${id}/book-appointment` : '/lawyer/book-appointment';
+  const clientInfo = useMemo(() => {
+    const stored = getStoredUser();
+    return {
+      name: stored?.full_name || stored?.fullName || stored?.name || stored?.email || 'Alicia Tan (Client)',
+      email: stored?.email || 'alicia.tan@example.com',
+      phone: stored?.phone || stored?.phone_number || stored?.mobile || '+60 12-345 6789',
+    };
+  }, []);
 
   useEffect(() => {
     setLocation(locationOptions[mode][0]);
@@ -158,11 +187,47 @@ const AppointmentBooking = () => {
     [selectedDate]
   );
 
+  const buildAppointmentPayload = () => {
+    const startDateTime = new Date(selectedDate);
+    if (selectedSlot) {
+      const [h, m] = selectedSlot.split(':').map(Number);
+      startDateTime.setHours(h, m, 0, 0);
+    }
+    return {
+      status: 'Pending approval',
+      referenceId: makeReference(),
+      start: startDateTime.toISOString(),
+      durationMinutes: duration,
+      mode,
+      appointmentType,
+      location: splitLocation(location),
+      meetingLink: mode === 'Video call' ? location : null,
+      lawyer: { ...mockLawyer },
+      client: { ...clientInfo },
+      caseDetails: {
+        practiceArea,
+        preferredLanguage: language || 'No preference',
+        conflictCheckNames: conflictNames || null,
+        issueSummary: issueSummary || null,
+        specialRequests: notes || null,
+        uploads: uploads.length ? uploads.join(', ') : 'None',
+      },
+    };
+  };
+
+  const saveLatestAppointment = () => {
+    try {
+      localStorage.setItem('ll_latest_appointment', JSON.stringify(buildAppointmentPayload()));
+    } catch {
+      /* ignore */
+    }
+  };
+
   const handleConfirm = () => {
     setReceipt({
-      clientName: mockClient.name,
-      clientEmail: mockClient.email,
-      clientPhone: mockClient.phone,
+      clientName: clientInfo.name,
+      clientEmail: clientInfo.email,
+      clientPhone: clientInfo.phone,
       lawyerName: mockLawyer.name,
       lawyerEmail: mockLawyer.email,
       lawyerPhone: mockLawyer.phone,
@@ -174,7 +239,7 @@ const AppointmentBooking = () => {
       issueSummary,
       conflictNames,
       language: language || 'No preference',
-      notes: notes || '—',
+      notes: notes || '-',
       uploads,
       date: heroDateLabel,
       time: selectedSlot ? formatTime(selectedSlot) : 'Not provided',
@@ -183,6 +248,7 @@ const AppointmentBooking = () => {
   };
 
   const handleFinalize = () => {
+    saveLatestAppointment();
     setShowReceiptModal(false);
     navigate('/appointment');
   };

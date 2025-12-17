@@ -12,6 +12,7 @@ import LawyerReviews from './pages/Lawyers/LawyerReviews';
 import AppointmentBooking from './pages/Lawyers/AppointmentBooking';
 import VerifyLawyers from './pages/Admin/VerifyLawyers';
 import UserManagement from './pages/Admin/UserManagement';
+import Appointment from './pages/Appointment/Appointment';
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
         <Route path="/lawyers/:id" element={<LawyerProfile />} />
         <Route path="/lawyers" element={<Lawyers />} />
         <Route path="/lawyer/:id/book-appointment" element={<AppointmentBooking />} />
+        <Route path="/appointment" element={<Appointment />} />
         <Route path="/admin/lawyers" element={<VerifyLawyers />} />
         <Route path="/admin/users" element={<UserManagement />} />
       </Routes>
