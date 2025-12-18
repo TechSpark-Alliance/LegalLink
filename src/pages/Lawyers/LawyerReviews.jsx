@@ -31,13 +31,14 @@ const LawyerReviews = () => {
       <main className="reviews-shell">
         <div className="reviews-head">
           <div className="head-actions">
-            <Link to={`/lawyers/${lawyer.id}`} className="back-link">
+            <Link to={`/client/lawyers/lawyer/${lawyer.id}`} className="back-link">
               ← Back to profile
             </Link>
           </div>
           <div>
             <p className="crumb">
-              <Link to="/lawyers">Lawyers</Link> / <Link to={`/lawyers/${lawyer.id}`}>{lawyer.name}</Link> / Reviews
+              <Link to="/client/lawyers">Lawyers</Link> /{' '}
+              <Link to={`/client/lawyers/lawyer/${lawyer.id}`}>{lawyer.name}</Link> / Reviews
             </p>
             <h1>{lawyer.name} — Reviews</h1>
             <p className="subtext">

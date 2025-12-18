@@ -90,7 +90,7 @@ export const ChatView = ({ activeId, embedded = false }) => {
   };
 
   const goToAppointment = () => {
-    navigate(`/lawyer/${activeId}/book-appointment`);
+    navigate(`/client/lawyers/lawyer/${activeId}/book-appointment`);
   };
 
   return (
@@ -187,7 +187,7 @@ const Chat = () => {
 
   return (
     <div className="chat-page">
-      <NavBar forceActive="/conversations" />
+      <NavBar forceActive="/client/conversations" />
       <ChatView activeId={activeId} />
     </div>
   );

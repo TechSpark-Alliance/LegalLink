@@ -7,14 +7,15 @@ import LawyerRegister from './pages/Authentication/Lawyer/LawyerRegister';
 import ClientHome from './pages/Home/ClientHome';
 import LawyerHome from './pages/Home/LawyerHome';
 import Lawyers from './pages/Lawyers/Lawyers';
-import LawyerProfile from './pages/Lawyers/LawyerProfile';
+import LawyerBio from './pages/Lawyers/LawyerBio';
 import LawyerProfileDashboard from './pages/Profile/LawyerProfile';
 import LawyerReviews from './pages/Lawyers/LawyerReviews';
 import AppointmentBooking from './pages/Lawyers/AppointmentBooking';
+import LawyerConversations from './pages/Conversations/LawyerConversations';
 import VerifyLawyers from './pages/Admin/VerifyLawyers';
 import UserManagement from './pages/Admin/UserManagement';
 import Appointment from './pages/Appointment/Appointment';
-import Conversations from './pages/Conversations/Conversations';
+import ClientConversations from './pages/Conversations/ClientConversations';
 import CreateCase from './pages/Cases/CreateCase';
 import CaseDetail from './pages/Cases/CaseDetail';
 import ClientsList from './pages/Clients/ClientsList';
@@ -32,7 +33,7 @@ function App() {
         <Route path="/register/client" element={<ClientRegister />} />
         <Route path="/register/lawyer" element={<LawyerRegister />} />
         <Route
-          path="/home/client"
+          path="/client/home"
           element={
             <RequireClient>
               <ClientHome />
@@ -95,13 +96,21 @@ function App() {
             </RequireLawyer>
           }
         />
-        <Route path="/lawyers/:id/reviews" element={<LawyerReviews />} />
-        <Route path="/lawyers/:id" element={<LawyerProfile />} />
-        <Route path="/lawyers" element={<Lawyers />} />
-        <Route path="/lawyer/:id/book-appointment" element={<AppointmentBooking />} />
-        <Route path="/appointment" element={<Appointment />} />
-        <Route path="/conversations" element={<Conversations />} />
-        <Route path="/conversation/chat/:chatId/lawyer/:lawyerId" element={<Conversations />} />
+        <Route
+          path="/lawyer/conversations"
+          element={
+            <RequireLawyer>
+              <LawyerConversations />
+            </RequireLawyer>
+          }
+        />
+        <Route path="/client/lawyers/lawyer/:id/reviews" element={<LawyerReviews />} />
+        <Route path="/client/lawyers/lawyer/:id" element={<LawyerBio />} />
+        <Route path="/client/lawyers" element={<Lawyers />} />
+        <Route path="/client/lawyers/lawyer/:id/book-appointment" element={<AppointmentBooking />} />
+        <Route path="/client/appointment" element={<Appointment />} />
+        <Route path="/client/conversations" element={<ClientConversations />} />
+        <Route path="/client/conversations/chat/:chatId/lawyer/:lawyerId" element={<ClientConversations />} />
         <Route path="/admin/lawyers" element={<VerifyLawyers />} />
         <Route path="/admin/users" element={<UserManagement />} />
       </Routes>

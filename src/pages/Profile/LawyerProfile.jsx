@@ -45,19 +45,24 @@ const formatState = (val) => {
     .join(' ');
 };
 
-export default function LawyerProfile() {
+export default function LawyerProfilePage() {
   const navigate = useNavigate();
   const apiBase = import.meta.env.VITE_APP_API || 'http://localhost:8000/api/v1';
   const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
 
   const [profile, setProfile] = useState(null);
   const [form, setForm] = useState({});
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState(true);
+  const [activePanel, setActivePanel] = useState('account');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [toast, setToast] = useState('');
   const [uploading, setUploading] = useState({ avatar: false, sijil: false, firm: false });
   const [expertiseOpen, setExpertiseOpen] = useState(false);
+  const [showPayment, setShowPayment] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('card');
 
   const apiRoot = (() => {
     try {
@@ -129,6 +134,12 @@ export default function LawyerProfile() {
     fetchProfile();
   }, []);
 
+  useEffect(() => {
+    if (!toast) return undefined;
+    const timer = setTimeout(() => setToast(''), 3000);
+    return () => clearTimeout(timer);
+  }, [toast]);
+
   const uploadFile = async (fieldKey, file, label) => {
     if (!file) return;
     const loadingKey = fieldKey === 'sijil_certificate' ? 'sijil' : fieldKey === 'law_firm_certificate' ? 'firm' : 'avatar';
@@ -160,6 +171,15 @@ export default function LawyerProfile() {
   };
 
   const saveProfile = async () => {
+    const nextErrors = {};
+    if (!form.law_firm) nextErrors.law_firm = 'Law firm is required.';
+    if (!form.years_of_experience) nextErrors.years_of_experience = 'Years of experience is required.';
+    if (!Array.isArray(form.expertise) || form.expertise.length === 0) {
+      nextErrors.expertise = 'Select at least one expertise category.';
+    }
+    setFieldErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) return;
+
     setSaving(true);
     try {
       const payload = {
@@ -188,7 +208,8 @@ export default function LawyerProfile() {
         throw new Error(data.detail || 'Save failed');
       }
       await fetchProfile();
-      setEditing(false);
+      setEditing(true);
+      setToast('Profile updated successfully.');
     } catch (err) {
       setError(err.message || 'Save failed');
     } finally {
@@ -196,7 +217,7 @@ export default function LawyerProfile() {
     }
   };
 
-  const detailRow = (label, value, fieldKey, isFull = false, isText = false) => {
+  const detailRow = (label, value, fieldKey, isFull = false, isText = false, inputType = 'text') => {
     const editable = editing && fieldKey;
     const inputProps = {
       value: form[fieldKey] ?? '',
@@ -209,10 +230,10 @@ export default function LawyerProfile() {
           isText ? (
             <textarea className="profile-input profile-textarea" rows={4} {...inputProps} />
           ) : (
-            <input className="profile-input" {...inputProps} />
+            <input className="profile-input" type={inputType} {...inputProps} />
           )
         ) : (
-          <span className="profile-value">{value || '—'}</span>
+          <span className="profile-value">{value || '-'}</span>
         )}
       </div>
     );
@@ -233,31 +254,30 @@ export default function LawyerProfile() {
                 {fileName || 'View file'}
               </a>
             ) : (
-              '—'
+              '-'
             )}
           </span>
         ) : (
           <div className="file-actions">
             {rawUrl ? (
-              <>
+              <div className="file-meta">
+                <span className="profile-value">{fileName}</span>
                 <a className="profile-link" href={displayUrl} target="_blank" rel="noreferrer">
-                  {fileName || 'View file'}
+                  View
                 </a>
-                <button className="ghost-btn" onClick={() => setForm((prev) => ({ ...prev, [fieldKey]: '' }))}>
-                  Remove
-                </button>
-              </>
+              </div>
             ) : (
-              <span className="profile-value">No file</span>
+              <span className="profile-value">No file uploaded</span>
             )}
             <label className="upload-btn">
-              {uploading[loadingKey] ? 'Uploading…' : rawUrl ? 'Replace' : 'Upload'}
+              {uploading[loadingKey] ? 'Uploading...' : rawUrl ? 'Replace' : 'Upload'}
               <input
                 type="file"
                 accept=".pdf,.jpg,.jpeg,.png"
                 onChange={(e) => uploadFile(fieldKey, e.target.files?.[0], label)}
               />
             </label>
+            <span className="form-hint">Accepted formats: PDF, JPG, PNG (max 10MB)</span>
           </div>
         )}
       </div>
@@ -271,18 +291,13 @@ export default function LawyerProfile() {
       <div className="profile-row avatar-row" key="profile-image">
         <span className="profile-label">Profile photo</span>
         {!editing ? (
-          displayUrl ? <img src={displayUrl} alt="Profile" className="avatar-preview" /> : <div className="avatar-placeholder">—</div>
+          displayUrl ? <img src={displayUrl} alt="Profile" className="avatar-preview" /> : <div className="avatar-placeholder">-</div>
         ) : (
           <div className="avatar-edit">
             {displayUrl ? <img src={displayUrl} alt="Profile" className="avatar-preview" /> : <div className="avatar-placeholder">No image</div>}
             <div className="file-actions">
-              {rawUrl && (
-                <button className="ghost-btn" onClick={() => setForm((prev) => ({ ...prev, profile_image: '' }))}>
-                  Remove
-                </button>
-              )}
               <label className="upload-btn">
-                {uploading.avatar ? 'Uploading…' : rawUrl ? 'Replace' : 'Upload'}
+                {uploading.avatar ? 'Uploading...' : rawUrl ? 'Replace' : 'Upload'}
                 <input type="file" accept="image/*" onChange={(e) => uploadFile('profile_image', e.target.files?.[0], 'Profile photo')} />
               </label>
             </div>
@@ -298,12 +313,12 @@ export default function LawyerProfile() {
       <div className="profile-row" key="expertise">
         <span className="profile-label">Expertise</span>
         {!editing ? (
-          <span className="profile-value">{selected.length ? selected.join(', ') : '—'}</span>
+          <span className="profile-value">{selected.length ? selected.join(', ') : '-'}</span>
         ) : (
           <div className="expertise-select">
             <div className="expertise-summary" onClick={() => setExpertiseOpen((o) => !o)}>
               <span>{selected.length ? `${selected.length} selected` : 'Choose expertise'}</span>
-              <span className="caret">▾</span>
+              <span className="caret">v</span>
             </div>
             {expertiseOpen && (
               <div className="expertise-dropdown">
@@ -341,7 +356,7 @@ export default function LawyerProfile() {
                         }))
                       }
                     >
-                      ×
+                      x
                     </button>
                   </span>
                 ))}
@@ -369,66 +384,281 @@ export default function LawyerProfile() {
     );
   }
 
+  const statusBadge = profile?.status?.is_verified ? 'Verified' : profile?.status ? 'Pending' : '';
+  const subscription = profile?.subscription || {};
+  const subscriptionStatus = subscription.status || 'Trial';
+  const subscriptionDate = subscription.renewal_date || subscription.next_billing_date || 'May 30, 2025';
+  const isSubscribed = Boolean(subscription.status);
+  const aboutCount = (form.about || '').length;
+  const aboutLimit = 500;
+
+  const handleCancel = () => {
+    setFieldErrors({});
+    fetchProfile();
+    setEditing(true);
+  };
+
   return (
     <LawyerLayout activeKey="cases" bodyClassName="profile-shell">
-      <div className="profile-card profile-card--wide profile-card--no-padding">
-        <div className="profile-inner">
-          <div className="profile-card__head">
-            <div>
-              <p className="lp-kicker">Account</p>
-              <h1 className="lp-title">Lawyer Profile</h1>
-              <p className="lp-subtitle">All details captured during registration.</p>
-            </div>
-            <div className="profile-actions">
-              {!editing ? (
-                <button className="primary-btn" onClick={() => setEditing(true)}>
-                  Edit
-                </button>
-              ) : (
-                <>
-                  <button className="ghost-btn" onClick={() => { setEditing(false); fetchProfile(); }}>Cancel</button>
-                  <button className="primary-btn" onClick={saveProfile} disabled={saving}>
-                    {saving ? 'Saving…' : 'Save'}
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
+      <div className="lawyer-profile-page">
+        <aside className="profile-sidebar">
+          <h2 className="sidebar-title">Profile</h2>
+          <button
+            type="button"
+            className={`sidebar-link ${activePanel === 'account' ? 'active' : ''}`}
+            onClick={() => setActivePanel('account')}
+          >
+            Account Settings
+          </button>
+          <button
+            type="button"
+            className={`sidebar-link ${activePanel === 'subscription' ? 'active' : ''}`}
+            onClick={() => setActivePanel('subscription')}
+          >
+            Manage Subscription
+          </button>
+        </aside>
 
-          <div className="profile-grid">
-            {profileImageRow()}
-            {detailRow('Full name', profile.full_name, 'full_name')}
-            {detailRow('Email', profile.email, null)}
-            {detailRow('Phone', profile.phone, 'phone')}
-            {detailRow('Law firm', profile.law_firm, 'law_firm')}
-            {fileRow('Law firm certificate', 'law_firm_certificate')}
-            {fileRow('Sijil certificate', 'sijil_certificate')}
-            {detailRow('Years of experience', profile.years_of_experience, 'years_of_experience')}
-            {expertiseRow()}
-            {editing ? (
-              <div className="profile-row">
-                <span className="profile-label">State</span>
-                <select
-                  className="profile-select"
-                  value={form.state || ''}
-                  onChange={(e) => setForm((prev) => ({ ...prev, state: e.target.value }))}
-                >
-                  <option value="">Choose state</option>
-                  {stateOptions.map((opt) => (
-                    <option key={opt} value={opt}>
-                      {opt}
-                    </option>
-                  ))}
-                </select>
+        <section className="profile-content">
+          {activePanel === 'account' ? (
+            <div className="profile-panel">
+              <div className="profile-header-card">
+                <div className="profile-header-left">
+                  <div className="profile-avatar-block">
+                    {profileImageRow()}
+                  </div>
+                  <div>
+                    <h1 className="profile-name">{profile.full_name || 'Lawyer Profile'}</h1>
+                    {statusBadge && <span className="status-badge">{statusBadge}</span>}
+                  </div>
+                </div>
+                <div className="profile-actions">
+                  <button className="ghost-btn" onClick={handleCancel}>
+                    Cancel
+                  </button>
+                  <button className="primary-btn" onClick={saveProfile} disabled={saving}>
+                    {saving ? 'Saving...' : 'Save Changes'}
+                  </button>
+                </div>
               </div>
-            ) : (
-              detailRow('State', profile.state, null)
-            )}
-            {detailRow('City', profile.city, 'city')}
-            {detailRow('About', profile.about, 'about', true, true)}
-          </div>
-        </div>
+
+              <div className="profile-section">
+                <h3>Account Details</h3>
+                <div className="profile-grid">
+                  {detailRow('Full name', profile.full_name, 'full_name')}
+                  {detailRow('Email', profile.email, null)}
+                  {detailRow('Phone', profile.phone, 'phone', false, false, 'tel')}
+                  <div className="profile-row">
+                    <span className="profile-label">State</span>
+                    <select
+                      className="profile-select"
+                      value={form.state || ''}
+                      onChange={(e) => setForm((prev) => ({ ...prev, state: e.target.value }))}
+                    >
+                      <option value="">Choose state</option>
+                      {stateOptions.map((opt) => (
+                        <option key={opt} value={opt}>
+                          {opt}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  {detailRow('City', profile.city, 'city')}
+                </div>
+              </div>
+
+              <div className="profile-section">
+                <h3>Lawyer Details</h3>
+                <div className="profile-grid">
+                  {fileRow('Sijil Annual & Practicing Certificate', 'sijil_certificate')}
+                  <div className="profile-row">
+                    <span className="profile-label">Law firm</span>
+                    <input
+                      className="profile-input"
+                      value={form.law_firm ?? ''}
+                      onChange={(e) => setForm((prev) => ({ ...prev, law_firm: e.target.value }))}
+                    />
+                    {fieldErrors.law_firm && <span className="field-error">{fieldErrors.law_firm}</span>}
+                  </div>
+                  {fileRow('Certificate of Registration of Law Firm', 'law_firm_certificate')}
+                  {expertiseRow()}
+                  <div className="profile-row">
+                    <span className="profile-label">Years of experience</span>
+                    <input
+                      className="profile-input"
+                      type="number"
+                      min="0"
+                      value={form.years_of_experience ?? ''}
+                      onChange={(e) => setForm((prev) => ({ ...prev, years_of_experience: e.target.value }))}
+                    />
+                    {fieldErrors.years_of_experience && (
+                      <span className="field-error">{fieldErrors.years_of_experience}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="profile-section">
+                <h3>About Me</h3>
+                <div className="profile-row span-full">
+                  <textarea
+                    className="profile-input profile-textarea"
+                    rows={5}
+                    maxLength={aboutLimit}
+                    value={form.about ?? ''}
+                    onChange={(e) => setForm((prev) => ({ ...prev, about: e.target.value }))}
+                  />
+                  <div className="form-hint">{aboutCount}/{aboutLimit} characters</div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="profile-panel">
+              <div className="profile-section">
+                <h3>Manage Subscription</h3>
+                <div className="subscription-card">
+                  <div className="subscription-header">
+                    <div>
+                      <h4>Monthly Plan</h4>
+                      <p className="subscription-price">RM150 / month</p>
+                    </div>
+                    <span className="trial-badge">Trial: 1 month</span>
+                  </div>
+                  <ul className="subscription-list">
+                    <li>Moderate outreach to potential clients</li>
+                    <li>Limited access to all platform features</li>
+                    <li>1-month trial period before subscription begins</li>
+                  </ul>
+                  <div className="subscription-meta">
+                    <div>Current plan: {isSubscribed ? 'Monthly Plan' : 'None'}</div>
+                    <div>Status: {subscriptionStatus}</div>
+                    <div>Next billing: {subscriptionDate}</div>
+                  </div>
+                  <div className="subscription-actions">
+                    {isSubscribed ? (
+                      <>
+                        <button type="button" className="primary-btn">
+                          Manage subscription
+                        </button>
+                        <button type="button" className="ghost-btn">
+                          Cancel plan
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        className="primary-btn"
+                        onClick={() => setShowPayment(true)}
+                      >
+                        Subscribe
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {showPayment && !isSubscribed && (
+                  <div className="payment-card">
+                    <div className="payment-header">
+                      <div>
+                        <h4>Payment method</h4>
+                        <p className="payment-subtitle">Secure checkout powered by Stripe (UI only).</p>
+                      </div>
+                      <span className="payment-badge">Cards accepted</span>
+                    </div>
+                    <div className="payment-methods">
+                      <button
+                        type="button"
+                        className={`method-pill ${paymentMethod === 'card' ? 'active' : ''}`}
+                        onClick={() => setPaymentMethod('card')}
+                      >
+                        Card (Visa/Mastercard)
+                      </button>
+                      <button
+                        type="button"
+                        className={`method-pill ${paymentMethod === 'fpx' ? 'active' : ''}`}
+                        onClick={() => setPaymentMethod('fpx')}
+                      >
+                        Internet Banking (FPX)
+                      </button>
+                    </div>
+                    <div className="payment-grid">
+                      {paymentMethod === 'card' ? (
+                        <>
+                          <div className="payment-field span-full">
+                            <label htmlFor="cardName">Name on card</label>
+                            <input id="cardName" type="text" placeholder="e.g. Aisyah Rahman" />
+                          </div>
+                          <div className="payment-field span-full">
+                            <label htmlFor="cardNumber">Card number</label>
+                            <input id="cardNumber" type="text" placeholder="1234 5678 9012 3456" />
+                          </div>
+                          <div className="payment-field">
+                            <label htmlFor="cardExpiry">Expiry</label>
+                            <input id="cardExpiry" type="text" placeholder="MM / YY" />
+                          </div>
+                          <div className="payment-field">
+                            <label htmlFor="cardCvc">CVC</label>
+                            <input id="cardCvc" type="text" placeholder="123" />
+                          </div>
+                          <div className="payment-field">
+                            <label htmlFor="billingEmail">Billing email</label>
+                            <input id="billingEmail" type="email" placeholder="email@example.com" />
+                          </div>
+                          <div className="payment-field">
+                            <label htmlFor="billingZip">Postal code</label>
+                            <input id="billingZip" type="text" placeholder="56000" />
+                          </div>
+                          <div className="payment-field span-full">
+                            <label htmlFor="billingCountry">Country</label>
+                            <select id="billingCountry" defaultValue="MY">
+                              <option value="MY">Malaysia</option>
+                              <option value="SG">Singapore</option>
+                              <option value="ID">Indonesia</option>
+                              <option value="TH">Thailand</option>
+                            </select>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="payment-field span-full">
+                            <label htmlFor="fpxBank">Select bank</label>
+                            <select id="fpxBank" defaultValue="">
+                              <option value="" disabled>
+                                Choose your bank
+                              </option>
+                              <option value="maybank">Maybank</option>
+                              <option value="cimb">CIMB</option>
+                              <option value="public">Public Bank</option>
+                              <option value="rhb">RHB</option>
+                              <option value="hongleong">Hong Leong</option>
+                            </select>
+                          </div>
+                          <div className="payment-field span-full">
+                            <label htmlFor="fpxEmail">Billing email</label>
+                            <input id="fpxEmail" type="email" placeholder="email@example.com" />
+                          </div>
+                        </>
+                      )}
+                    </div>
+                    <div className="payment-actions">
+                      <button type="button" className="primary-btn">
+                        {paymentMethod === 'card' ? 'Pay RM150' : 'Continue to bank'}
+                      </button>
+                      <button type="button" className="ghost-btn" onClick={() => setShowPayment(false)}>
+                        Cancel
+                      </button>
+                    </div>
+                    <p className="payment-hint">
+                      By clicking pay, you agree to our terms and Stripe processing. This is a UI placeholder.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </section>
       </div>
+      {toast && <div className="toast success">{toast}</div>}
     </LawyerLayout>
   );
 }

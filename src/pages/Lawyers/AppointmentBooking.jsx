@@ -123,7 +123,7 @@ const AppointmentBooking = () => {
   const [selectedSlot, setSelectedSlot] = useState('');
   const [receipt, setReceipt] = useState(null);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
-  const bookingPath = id ? `/lawyer/${id}/book-appointment` : '/lawyer/book-appointment';
+  const bookingPath = id ? `/client/lawyers/lawyer/${id}/book-appointment` : '/client/lawyers/book-appointment';
   const clientInfo = useMemo(() => {
     const stored = getStoredUser();
     return {
@@ -174,7 +174,7 @@ const AppointmentBooking = () => {
     .toString()
     .padStart(2, '0')}/${selectedDate.getFullYear()}`;
 
-  const profilePath = id ? `/lawyers/${id}` : '/lawyers';
+  const profilePath = id ? `/client/lawyers/lawyer/${id}` : '/client/lawyers';
 
   const heroDateLabel = useMemo(
     () =>
@@ -250,7 +250,7 @@ const AppointmentBooking = () => {
   const handleFinalize = () => {
     saveLatestAppointment();
     setShowReceiptModal(false);
-    navigate('/appointment');
+    navigate('/client/appointment');
   };
 
   const receiptFields = receipt
@@ -287,7 +287,7 @@ const AppointmentBooking = () => {
 
   return (
     <div className="booking-page">
-      <NavBar forceActive="/lawyers" />
+      <NavBar forceActive="/client/lawyers" />
       <main className="booking-shell">
         <header className="page-head">
           <div>

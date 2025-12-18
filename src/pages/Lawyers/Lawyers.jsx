@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import NavBar from '../../components/NavBar/NavBar';
 import './Lawyers.css';
 import lawyerPortrait from '../../assets/lawyer1.png';
+
+const API_BASE = import.meta.env.VITE_APP_API || 'http://localhost:8000/api/v1';
 
 const heroHeadline = 'Welcome User, what are you looking for today';
 const heroSubtext = 'Secure your peace of mind - consult with our top lawyers today!';
@@ -39,6 +41,23 @@ const lawyerCards = [
   { placeholder: true, description: 'A generalist to handle most cases.' },
 ];
 
+const normalizeLawyerCard = (lawyer) => {
+  if (!lawyer) return null;
+  const id = lawyer._id || lawyer.id || lawyer.user_id;
+  if (!id) return null;
+  const name = lawyer.full_name || lawyer.fullName || lawyer.name || 'Lawyer';
+  const locationParts = [lawyer.city, lawyer.state].filter(Boolean);
+  const location = locationParts.length ? locationParts.join(', ') : lawyer.location || 'Location unavailable';
+  return {
+    id,
+    label: lawyer.title || lawyer.specialty || 'Registered Lawyer',
+    name,
+    location,
+    description: lawyer.about || lawyer.bio || 'A generalist to handle most cases.',
+    image: lawyer.profile_image || lawyer.avatar || lawyerPortrait,
+  };
+};
+
 const Icon = ({ type }) => {
   if (type === 'pin') {
     return (
@@ -67,6 +86,45 @@ const Icon = ({ type }) => {
 };
 
 const Lawyers = () => {
+  const [lawyers, setLawyers] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchLawyers = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`${API_BASE}/auth/lawyers`);
+        if (!res.ok) {
+          throw new Error('Failed to load lawyers');
+        }
+        const data = await res.json();
+        const items = data.lawyers || data.items || data;
+        const normalized = Array.isArray(items)
+          ? items.map(normalizeLawyerCard).filter(Boolean)
+          : [];
+        if (isMounted && normalized.length > 0) {
+          setLawyers(normalized);
+        }
+      } catch {
+        if (isMounted) {
+          setLawyers([]);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchLawyers();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const displayCards = lawyers.length > 0 ? lawyers : lawyerCards;
+
   return (
     <div className="lawyers-page">
       <NavBar />
@@ -121,8 +179,8 @@ const Lawyers = () => {
         </div>
 
         <section className="card-grid" aria-label="Lawyer results">
-          {lawyerCards.map((card, index) => (
-            <div key={card.label || `placeholder-${index}`} className="card-wrap">
+          {displayCards.map((card, index) => (
+            <div key={card.id || card.label || `placeholder-${index}`} className="card-wrap">
               {card.placeholder ? (
                 <article className="lawyer-card placeholder">
                   <div className="placeholder-top" />
@@ -130,7 +188,11 @@ const Lawyers = () => {
                   <div className="placeholder-footer" />
                 </article>
               ) : (
-                <Link to={`/lawyers/${card.id}`} className="card-link" aria-label={`View ${card.name} profile`}>
+                <Link
+                  to={`/client/lawyers/lawyer/${card.id}`}
+                  className="card-link"
+                  aria-label={`View ${card.name} profile`}
+                >
                   <article className="lawyer-card">
                     <div className="card-label">{card.label}</div>
                     <div className="portrait">
@@ -153,7 +215,7 @@ const Lawyers = () => {
 
         <div className="load-more-row">
           <a className="load-more" href="/" onClick={(e) => e.preventDefault()}>
-            Load more
+            {loading ? 'Loading...' : 'Load more'}
           </a>
         </div>
       </main>

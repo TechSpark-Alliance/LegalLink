@@ -74,7 +74,7 @@ const UserLogin = () => {
       if (role === 'lawyer') {
         navigate('/lawyer/cases');
       } else {
-        navigate('/home/client');
+        navigate('/client/home');
       }
     } catch (err) {
       alert(err.message || 'Login failed');

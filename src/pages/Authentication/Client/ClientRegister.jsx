@@ -152,7 +152,7 @@ const ClientRegister = () => {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.detail || 'Registration failed');
       }
-      navigate('/home/client');
+      navigate('/client/home');
     } catch (err) {
       alert(err.message || 'Registration failed');
     } finally {
