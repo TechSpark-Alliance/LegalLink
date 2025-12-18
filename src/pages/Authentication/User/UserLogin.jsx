@@ -52,16 +52,27 @@ const UserLogin = () => {
         throw new Error(data.detail || 'Login failed');
       }
       const data = await res.json();
-      if (data?.user) {
-        try {
-          localStorage.setItem('ll_user', JSON.stringify(data.user));
-        } catch (err) {
-          console.warn('Failed to cache user profile', err);
-        }
+      const role = data?.user?.role || 'client';
+      const token = data?.session?.token || '';
+      if (token) {
+        localStorage.setItem('token', token);
+        sessionStorage.setItem('token', token);
       }
-      const role = data?.user?.role;
+      if (role) {
+        localStorage.setItem('role', role);
+        sessionStorage.setItem('role', role);
+      }
+      if (data?.user?.full_name) {
+        localStorage.setItem('full_name', data.user.full_name);
+        sessionStorage.setItem('full_name', data.user.full_name);
+      }
+      try {
+        localStorage.setItem('ll_user', JSON.stringify(data.user));
+      } catch (err) {
+        console.warn('Failed to cache user profile', err);
+      }
       if (role === 'lawyer') {
-        navigate('/home/lawyer');
+        navigate('/lawyer/cases');
       } else {
         navigate('/home/client');
       }
@@ -172,4 +183,3 @@ const UserLogin = () => {
 };
 
 export default UserLogin;
-

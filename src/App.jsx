@@ -8,12 +8,19 @@ import ClientHome from './pages/Home/ClientHome';
 import LawyerHome from './pages/Home/LawyerHome';
 import Lawyers from './pages/Lawyers/Lawyers';
 import LawyerProfile from './pages/Lawyers/LawyerProfile';
+import LawyerProfileDashboard from './pages/Profile/LawyerProfile';
 import LawyerReviews from './pages/Lawyers/LawyerReviews';
 import AppointmentBooking from './pages/Lawyers/AppointmentBooking';
 import VerifyLawyers from './pages/Admin/VerifyLawyers';
 import UserManagement from './pages/Admin/UserManagement';
 import Appointment from './pages/Appointment/Appointment';
 import Conversations from './pages/Conversations/Conversations';
+import CreateCase from './pages/Cases/CreateCase';
+import CaseDetail from './pages/Cases/CaseDetail';
+import ClientsList from './pages/Clients/ClientsList';
+import ClientDetail from './pages/Clients/ClientDetail';
+import RequireLawyer from './components/RequireLawyer';
+import RequireClient from './components/RequireClient';
 
 function App() {
   return (
@@ -24,8 +31,70 @@ function App() {
         <Route path="/register" element={<RegisterRole />} />
         <Route path="/register/client" element={<ClientRegister />} />
         <Route path="/register/lawyer" element={<LawyerRegister />} />
-        <Route path="/home/client" element={<ClientHome />} />
-        <Route path="/home/lawyer" element={<LawyerHome />} />
+        <Route
+          path="/home/client"
+          element={
+            <RequireClient>
+              <ClientHome />
+            </RequireClient>
+          }
+        />
+        <Route
+          path="/home/lawyer"
+          element={
+            <RequireLawyer>
+              <LawyerHome />
+            </RequireLawyer>
+          }
+        />
+        <Route
+          path="/lawyer/cases"
+          element={
+            <RequireLawyer>
+              <LawyerHome />
+            </RequireLawyer>
+          }
+        />
+        <Route
+          path="/lawyer/cases/new"
+          element={
+            <RequireLawyer>
+              <CreateCase />
+            </RequireLawyer>
+          }
+        />
+        <Route
+          path="/lawyer/cases/:id"
+          element={
+            <RequireLawyer>
+              <CaseDetail />
+            </RequireLawyer>
+          }
+        />
+        <Route
+          path="/lawyer/clients"
+          element={
+            <RequireLawyer>
+              <ClientsList />
+            </RequireLawyer>
+          }
+        />
+        <Route
+          path="/lawyer/clients/:id"
+          element={
+            <RequireLawyer>
+              <ClientDetail />
+            </RequireLawyer>
+          }
+        />
+        <Route
+          path="/lawyer/profile"
+          element={
+            <RequireLawyer>
+              <LawyerProfileDashboard />
+            </RequireLawyer>
+          }
+        />
         <Route path="/lawyers/:id/reviews" element={<LawyerReviews />} />
         <Route path="/lawyers/:id" element={<LawyerProfile />} />
         <Route path="/lawyers" element={<Lawyers />} />
