@@ -1,149 +1,504 @@
-import React from 'react';
-import { Link, useParams } from 'react-router-dom';
-import NavBar from '../../components/NavBar/NavBar';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import '../Clients/ClientsList.css';
 import './LawyerProfile.css';
-import { lawyersData } from './lawyersData';
+import logo from '../../assets/legal-link-logo.png';
 
-const Icon = ({ type }) => {
-  const common = { className: 'lp-icon', 'aria-hidden': 'true', viewBox: '0 0 24 24' };
-  if (type === 'pin') {
-    return (
-      <svg {...common}>
-        <path d="M12 2.5c-3.31 0-6 2.61-6 5.83 0 1.68.66 3.19 1.82 4.67 1.05 1.36 2.38 2.64 3.77 4.45a.75.75 0 0 0 1.17 0c1.39-1.81 2.72-3.1 3.77-4.45C17.34 11.52 18 10.01 18 8.33 18 5.11 15.31 2.5 12 2.5Zm0 7.83a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5Z" />
-      </svg>
-    );
-  }
-  if (type === 'star') {
-    return (
-      <svg {...common}>
-        <path d="M11.05 4.79c.3-.92 1.6-.92 1.9 0l1.06 3.28h3.45c.96 0 1.36 1.23.59 1.79l-2.79 2.02 1.06 3.28c.3.92-.76 1.69-1.54 1.13L12 14.57l-2.78 2.71c-.78.56-1.84-.21-1.54-1.13l1.06-3.28-2.79-2.02c-.77-.56-.37-1.79.59-1.79h3.45l1.06-3.28Z" />
-      </svg>
-    );
-  }
-  if (type === 'phone') {
-    return (
-      <svg {...common}>
-        <path d="M8.6 3.54c.24-.69.99-1.08 1.69-.87l2.3.69c.66.2 1.07.85.93 1.52l-.36 1.78c-.11.55-.53.98-1.07 1.12-.73.2-1.32.79-1.52 1.52-.14.54-.57.96-1.12 1.07l-1.78.36c-.67.14-1.32-.27-1.52-.93l-.69-2.3a1.38 1.38 0 0 1 .87-1.69l2.27-.74Z" />
-        <path d="M6.48 12.03c2.2 3.45 5.04 6.29 8.49 8.49.62.4 1.42.35 1.97-.12l1.12-.95c.58-.49.71-1.33.29-1.98l-1.16-1.86a1.38 1.38 0 0 0-1.8-.48l-.98.49a1.38 1.38 0 0 1-1.52-.23l-1.74-1.54a1.38 1.38 0 0 1-.23-1.52l.49-.98c.34-.68.1-1.51-.48-1.8l-1.86-1.16c-.65-.42-1.49-.29-1.98.29l-.95 1.12c-.47.55-.52 1.35-.12 1.97Z" />
-      </svg>
-    );
-  }
-  if (type === 'building') {
-    return (
-      <svg {...common}>
-        <path d="M6.5 4.75a1.75 1.75 0 0 1 1.75-1.75h7.5A1.75 1.75 0 0 1 17.5 4.75v14.5h1.25a.75.75 0 0 1 0 1.5h-13a.75.75 0 0 1 0-1.5H7.5V4.75Zm8.5 14.5V4.75a.25.25 0 0 0-.25-.25h-7.5a.25.25 0 0 0-.25.25v14.5h8Zm-6-11.25h1.5a.75.75 0 0 1 0 1.5H9a.75.75 0 0 1 0-1.5Zm0 3h1.5a.75.75 0 0 1 0 1.5H9a.75.75 0 0 1 0-1.5Zm0 3h1.5a.75.75 0 0 1 0 1.5H9a.75.75 0 0 1 0-1.5Zm4-6h1.5a.75.75 0 0 1 0 1.5h-1.5a.75.75 0 0 1 0-1.5Zm0 3h1.5a.75.75 0 0 1 0 1.5h-1.5a.75.75 0 0 1 0-1.5Zm0 3h1.5a.75.75 0 0 1 0 1.5h-1.5a.75.75 0 0 1 0-1.5Z" />
-      </svg>
-    );
-  }
-  if (type === 'mail') {
-    return (
-      <svg {...common}>
-        <path d="M4.5 6.75A1.75 1.75 0 0 1 6.25 5h11.5A1.75 1.75 0 0 1 19.5 6.75v10.5A1.75 1.75 0 0 1 17.75 19H6.25A1.75 1.75 0 0 1 4.5 17.25V6.75Zm12.5-.25H7l5 3.75L17 6.5Zm-12 1.19 5.99 4.49a.75.75 0 0 0 .92 0L17 7.69v9.56c0 .14-.11.25-.25.25H6.25a.25.25 0 0 1-.25-.25V7.69Z" />
-      </svg>
-    );
-  }
-  return null;
-};
+const NAV_ITEMS = [
+  { key: 'cases', label: 'Cases', path: '/lawyer/cases' },
+  { key: 'clients', label: 'Clients', path: '/lawyer/clients' },
+  { key: 'appointments', label: 'Appointments', path: '/lawyer/appointments' },
+  { key: 'conversations', label: 'Conversations', path: '/lawyer/conversations' },
+];
 
-const LawyerProfile = () => {
-  const { id } = useParams();
-  const lawyer = lawyersData[id];
+export default function LawyerProfile() {
+  const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [profile, setProfile] = useState(null);
+  const [error, setError] = useState('');
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState({});
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState({ sijil: false, firm: false, avatar: false });
+  const [loading, setLoading] = useState(true);
+  const [expertiseOpen, setExpertiseOpen] = useState(false);
+  const stateOptions = [
+    'Johor',
+    'Kedah',
+    'Kelantan',
+    'Kuala Lumpur',
+    'Labuan',
+    'Melaka',
+    'Negeri Sembilan',
+    'Pahang',
+    'Pulau Pinang',
+    'Perak',
+    'Perlis',
+    'Putrajaya',
+    'Sabah',
+    'Sarawak',
+    'Selangor',
+    'Terengganu',
+  ];
 
-  if (!lawyer) {
+  const formatState = (val) => {
+    if (!val) return '';
+    const cleaned = String(val).replace(/[-_]/g, ' ');
+    return cleaned
+      .split(' ')
+      .filter(Boolean)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join(' ');
+  };
+  const expertiseOptions = [
+    'Litigation',
+    'Corporate',
+    'Family',
+    'Criminal',
+    'Employment',
+    'Intellectual Property',
+    'Tax',
+    'Real Estate',
+    'Immigration',
+    'Other',
+  ];
+  const apiBase = import.meta.env.VITE_APP_API || 'http://localhost:8000/api/v1';
+  const apiRoot = (() => {
+    try {
+      const url = new URL(apiBase);
+      // strip trailing /api/v1 if present
+      const path = url.pathname.replace(/\/api\/v1\/?$/, '') || '';
+      url.pathname = path;
+      return url.origin + url.pathname;
+    } catch {
+      return apiBase.replace(/\/api\/v1$/, '');
+    }
+  })();
+  const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
+  const lawyerName =
+    localStorage.getItem('full_name') ||
+    sessionStorage.getItem('full_name') ||
+    'Profile';
+
+  const fetchProfile = async () => {
+    setLoading(true);
+    try {
+      setError('');
+      const res = await fetch(`${apiBase}/auth/user/me`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) {
+        if (res.status === 401) {
+          navigate('/login', { replace: true });
+          return;
+        }
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.detail || 'Failed to load profile');
+      }
+      const data = await res.json();
+      const user = data.user || null;
+      if (user) {
+        const expertiseList =
+          user.expertise && Array.isArray(user.expertise)
+            ? user.expertise
+            : user.expertise
+            ? String(user.expertise)
+                .split(',')
+                .map((v) => v.trim())
+                .filter(Boolean)
+            : [];
+        const normalizedState = formatState(user.state || '');
+        const normalizedUser = { ...user, state: normalizedState };
+        setProfile(normalizedUser);
+        setForm({
+          full_name: user.full_name || '',
+          phone: user.phone || '',
+          state: normalizedState,
+          city: user.city || '',
+          about: user.about || '',
+          expertise: expertiseList,
+          years_of_experience: user.years_of_experience || '',
+          law_firm: user.law_firm || '',
+          sijil_certificate: user.sijil_certificate || '',
+          law_firm_certificate: user.law_firm_certificate || '',
+          profile_image: user.profile_image || '',
+        });
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to load profile');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      if (token) {
+        await fetch(`${apiBase}/auth/user/logout`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token }),
+        });
+      }
+    } catch {
+      /* ignore */
+    } finally {
+      localStorage.clear();
+      sessionStorage.clear();
+      navigate('/login');
+    }
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const payload = {
+        full_name: form.full_name,
+        phone: form.phone,
+        state: formatState(form.state),
+        city: form.city,
+        about: form.about,
+        years_of_experience: form.years_of_experience,
+        law_firm: form.law_firm,
+        sijil_certificate: form.sijil_certificate,
+        law_firm_certificate: form.law_firm_certificate,
+        profile_image: form.profile_image,
+        expertise: Array.isArray(form.expertise) ? form.expertise : [],
+      };
+      const res = await fetch(`${apiBase}/auth/user/me`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.detail || 'Save failed');
+      }
+      await fetchProfile();
+      setEditing(false);
+    } catch (err) {
+      setError(err.message || 'Save failed');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const detailRow = (label, value, fieldKey, isCompact = false, isFull = false) => {
+    const isEditable = editing && fieldKey;
+    const inputProps = {
+      value: form[fieldKey] ?? '',
+      onChange: (e) => setForm({ ...form, [fieldKey]: e.target.value }),
+    };
+
     return (
-      <div className="lawyer-profile-page">
-        <NavBar />
-        <main className="profile-shell">
-          <div className="not-found">Lawyer not found.</div>
-        </main>
+      <div className={`profile-row ${isCompact ? 'compact-row' : ''} ${isFull ? 'span-full' : ''}`} key={label}>
+        <span className="profile-label">{label}</span>
+        {isEditable ? (
+          fieldKey === 'about' ? (
+            <textarea className="profile-input profile-textarea" rows={4} {...inputProps} />
+          ) : (
+            <input className="profile-input" {...inputProps} />
+          )
+        ) : (
+          <span className="profile-value">{value || '-'}</span>
+        )}
       </div>
     );
-  }
+  };
+
+  const expertiseList =
+    form?.expertise ||
+    (profile?.expertise && Array.isArray(profile.expertise) && profile.expertise.length > 0
+      ? profile.expertise.join(', ')
+      : '');
+
+  const uploadFile = async (fieldKey, file, uploadLabel) => {
+    if (!file) return;
+    const loadingKey =
+      fieldKey === 'sijil_certificate' ? 'sijil' : fieldKey === 'law_firm_certificate' ? 'firm' : 'avatar';
+    setUploading((u) => ({ ...u, [loadingKey]: true }));
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch(`${apiBase}/files/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.detail || `${uploadLabel} upload failed`);
+      }
+      const data = await res.json();
+      setForm((prev) => ({ ...prev, [fieldKey]: data.url || '' }));
+    } catch (err) {
+      setError(err.message || `${uploadLabel} upload failed`);
+    } finally {
+      setUploading((u) => ({ ...u, [loadingKey]: false }));
+    }
+  };
+
+  const fileRow = (label, fieldKey) => {
+    const rawUrl = form[fieldKey] || '';
+    const loadingKey =
+      fieldKey === 'sijil_certificate' ? 'sijil' : fieldKey === 'law_firm_certificate' ? 'firm' : 'avatar';
+    const displayUrl = (() => {
+      if (!rawUrl) return '';
+      const value = String(rawUrl);
+      if (value.startsWith('http')) return value;
+      const prefix = apiRoot.endsWith('/') ? apiRoot.slice(0, -1) : apiRoot;
+      const path = value.startsWith('/') ? value : `/${value}`;
+      return `${prefix}${path}`;
+    })();
+    const fileName = rawUrl ? String(rawUrl).split('/').pop() : '';
+
+    return (
+      <div className="profile-row" key={label}>
+        <span className="profile-label">{label}</span>
+        {!editing ? (
+          <span className="profile-value">
+            {displayUrl ? (
+              <a className="profile-link" href={displayUrl} target="_blank" rel="noreferrer">
+                {fileName || 'View file'}
+              </a>
+            ) : (
+              '-'
+            )}
+          </span>
+        ) : (
+          <div className="file-actions">
+            {rawUrl ? (
+              <>
+                <a className="profile-link" href={displayUrl} target="_blank" rel="noreferrer">
+                  {fileName || 'View file'}
+                </a>
+                <button className="ghost-btn" onClick={() => setForm({ ...form, [fieldKey]: '' })}>
+                  Remove
+                </button>
+              </>
+            ) : (
+              <span className="profile-value">No file</span>
+            )}
+            <div className="upload-inline">
+            <label className="upload-btn">
+              {uploading[loadingKey] ? 'Uploading...' : 'Upload'}
+              <input
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png"
+                onChange={(e) => uploadFile(fieldKey, e.target.files?.[0], label)}
+              />
+            </label>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const profileImageRow = () => {
+    const rawUrl = form.profile_image || '';
+    const displayUrl = (() => {
+      if (!rawUrl) return '';
+      const value = String(rawUrl);
+      if (value.startsWith('http')) return value;
+      const prefix = apiRoot.endsWith('/') ? apiRoot.slice(0, -1) : apiRoot;
+      const path = value.startsWith('/') ? value : `/${value}`;
+      return `${prefix}${path}`;
+    })();
+    const loading = uploading.avatar;
+    return (
+      <div className="profile-row compact-row avatar-row" key="profile-image">
+        <span className="profile-label">Profile photo</span>
+        {!editing ? (
+          displayUrl ? (
+            <img src={displayUrl} alt="Profile" className="avatar-preview" />
+          ) : (
+            <div className="avatar-placeholder">N/A</div>
+          )
+        ) : (
+          <div className="avatar-edit">
+            {displayUrl ? (
+              <img src={displayUrl} alt="Profile" className="avatar-preview" />
+            ) : (
+              <div className="avatar-placeholder">No image</div>
+            )}
+            <div className="file-actions">
+              {rawUrl && (
+                <button className="ghost-btn" onClick={() => setForm((prev) => ({ ...prev, profile_image: '' }))}>
+                  Remove
+                </button>
+              )}
+              <label className="upload-btn">
+                {loading ? 'Uploading...' : rawUrl ? 'Replace' : 'Upload'}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => uploadFile('profile_image', e.target.files?.[0], 'Profile photo')}
+                />
+              </label>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const expertiseRow = () => {
+    const selected = Array.isArray(form.expertise) ? form.expertise : [];
+    const displayValue = selected.length ? `${selected.length} selected` : 'Choose expertise';
+    return (
+      <div className="profile-row" key="expertise">
+        <span className="profile-label">Expertise</span>
+        {!editing ? (
+          <span className="profile-value">{selected.length ? selected.join(', ') : '-'}</span>
+        ) : (
+          <div className="expertise-select">
+            <div className="expertise-summary" onClick={() => setExpertiseOpen((o) => !o)}>
+              <span>{displayValue}</span>
+              <span className="caret">▾</span>
+            </div>
+            {expertiseOpen && (
+              <div className="expertise-dropdown">
+                {expertiseOptions.map((opt) => {
+                  const checked = selected.includes(opt);
+                  return (
+                    <label key={opt} className="expertise-option">
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => {
+                          setForm((prev) => {
+                            const next = checked
+                              ? prev.expertise.filter((v) => v !== opt)
+                              : [...prev.expertise, opt];
+                            return { ...prev, expertise: next };
+                          });
+                        }}
+                      />
+                      <span>{opt}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+            <div className="expertise-chips">
+              {selected.map((chip) => (
+                <span key={chip} className="chip">
+                  {chip}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setForm((prev) => ({
+                        ...prev,
+                        expertise: prev.expertise.filter((v) => v !== chip),
+                      }))
+                    }
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  if (error) return <div className="profile-shell"><p className="admin-error">{error}</p></div>;
+  if (loading || !profile) return <div className="profile-shell"><p className="muted">Loading...</p></div>;
 
   return (
-    <div className="lawyer-profile-page">
-      <NavBar />
-      <main className="profile-shell">
-        <div className="profile-head">
-          <Link to="/lawyers" className="back-link">
-            ← Back to discovery
-          </Link>
-          <Link to={`/lawyers/${lawyer.id}/reviews`} className="reviews-head-link">
-            See all reviews →
-          </Link>
+    <div className="profile-shell">
+      <header className="clients-header">
+        <div className="clients-brand">
+          <img src={logo} alt="LegalLink" className="brand-logo" />
+          <span className="brand-name">LegalLink</span>
         </div>
-        <section className="profile-top">
-          <div className="profile-left">
-            <h1>{lawyer.title}</h1>
-            <p className="bio">{lawyer.bio}</p>
-            <div className="metrics">
-              <div className="pill">
-                Cases Won <span className="highlight">{lawyer.casesWon}</span>
-              </div>
-              <div className="pill">
-                Experience <span className="highlight">{lawyer.experience}</span>
-              </div>
-              <div className="pill">
-                Ratings <span className="highlight">{lawyer.rating}</span>
-                <Icon type="star" />
-              </div>
-            </div>
-            <div className="reviews-block">
-              <h2>Reviews</h2>
-              <p className="review-quote">“{lawyer.review.quote}”</p>
-              <p className="reviewer">
-                - {lawyer.review.reviewer} rated {lawyer.review.stars} stars
-              </p>
-              <p className="review-quote">“Quick to respond and very thorough in explaining every step.”</p>
-              <p className="reviewer">- A. Rivera rated 5 stars</p>
-            </div>
-          </div>
-          <div className="profile-right">
-            <div className="portrait-card">
-              <img src={lawyer.image} alt={`${lawyer.name} portrait`} />
-            </div>
-            <div className="location">
-              <Icon type="pin" />
-              <span>{lawyer.location}</span>
-            </div>
-          </div>
-        </section>
-
-        <div className="divider" />
-
-        <section className="firm-panel">
-          <div className="firm-block">
-            <div className="firm-line">
-              <Icon type="building" />
-              <span>{lawyer.firm.name}</span>
-            </div>
-            <div className="firm-line">
-              <Icon type="phone" />
-              <span>{lawyer.firm.office}</span>
-            </div>
-          </div>
-          <div className="firm-block">
-            <div className="firm-line">
-              <Icon type="pin" />
-              <span>{lawyer.firm.address}</span>
-            </div>
-          <div className="firm-line">
-              <Icon type="mail" />
-              <span>{lawyer.firm.email}</span>
-            </div>
-          </div>
-          <div className="cta-block">
-            <Link to={`/lawyer/${lawyer.id}/book-appointment`} className="cta primary">
-              Book appointment
-            </Link>
-            <button type="button" className="cta secondary">
-              Have a quick chat
+        <nav className="clients-nav">
+          {NAV_ITEMS.map((item) => (
+            <button
+              key={item.key}
+              className={`nav-link ${item.key === 'cases' ? 'active' : ''}`}
+              onClick={() => navigate(item.path)}
+            >
+              {item.label}
             </button>
-          </div>
-        </section>
-      </main>
+          ))}
+        </nav>
+        <div className="profile-wrapper">
+          <button
+            className="profile-badge"
+            onClick={() => setMenuOpen((o) => !o)}
+            aria-haspopup="true"
+            aria-expanded={menuOpen}
+          >
+            <div className="avatar">{(lawyerName || 'P').charAt(0)}</div>
+            <span className="profile-name">{lawyerName}</span>
+          </button>
+          {menuOpen && (
+            <div className="profile-menu" role="menu">
+              <button className="profile-menu__item" onClick={() => navigate('/lawyer/profile')}>Profile</button>
+              <button className="profile-menu__item" onClick={handleLogout}>Logout</button>
+            </div>
+          )}
+        </div>
+      </header>
+
+      <div className="profile-card">
+        <h3>Lawyer Profile</h3>
+        <div className="profile-actions">
+          {!editing ? (
+            <button className="primary-btn" onClick={() => setEditing(true)}>Edit</button>
+          ) : (
+            <>
+              <button className="ghost-btn" onClick={() => { setEditing(false); fetchProfile(); }}>Cancel</button>
+              <button className="primary-btn" onClick={handleSave} disabled={saving}>
+                {saving ? 'Saving...' : 'Save'}
+              </button>
+            </>
+          )}
+        </div>
+        <div className="profile-grid">
+          {profileImageRow()}
+          {detailRow('Full name', profile.full_name, 'full_name', true)}
+          {detailRow('Email', profile.email)}
+          {detailRow('Phone', profile.phone, 'phone')}
+          {detailRow('Role', profile.role)}
+          {detailRow('Law firm', profile.law_firm, 'law_firm')}
+          {fileRow('Law firm certificate', 'law_firm_certificate')}
+          {fileRow('Sijil certificate', 'sijil_certificate')}
+          {detailRow('Years of experience', profile.years_of_experience, 'years_of_experience')}
+          {expertiseRow()}
+          {editing ? (
+            <div className="profile-row">
+              <span className="profile-label">State</span>
+              <select
+                className="profile-select"
+                value={form.state || ''}
+                onChange={(e) => setForm({ ...form, state: e.target.value })}
+              >
+                <option value="">Choose state</option>
+                {stateOptions.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : (
+            detailRow('State', profile.state, null)
+          )}
+          {detailRow('City', profile.city, 'city')}
+          {detailRow('About', profile.about, 'about', false, true)}
+        </div>
+      </div>
     </div>
   );
-};
-
-export default LawyerProfile;
+}

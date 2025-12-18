@@ -1,0 +1,248 @@
+.profile-shell {
+  display: grid;
+  gap: 16px;
+  max-width: none;
+}
+
+.profile-card {
+  background: rgba(17, 26, 46, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+  display: grid;
+  gap: 14px;
+}
+
+.profile-card--wide {
+  width: 100%;
+  max-width: none;
+}
+
+.profile-card--no-padding {
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.profile-inner {
+  background: rgba(17, 26, 46, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+  display: grid;
+  gap: 14px;
+}
+
+.profile-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.lp-kicker {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 12px;
+  color: #9fb0d2;
+  margin: 0 0 4px 0;
+}
+
+.lp-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: #f4f6fc;
+}
+
+.lp-subtitle {
+  margin: 4px 0 0 0;
+  color: #c3cce0;
+  font-size: 14px;
+}
+
+.profile-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(300px, 1fr));
+  gap: 12px 16px;
+}
+
+.profile-row {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 12px;
+  display: grid;
+  gap: 6px;
+}
+
+.profile-row.span-full {
+  grid-column: 1 / -1;
+}
+
+.profile-label {
+  margin: 0;
+  color: #9fb0d2;
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.profile-value {
+  margin: 0;
+  color: #f4f6fc;
+  font-weight: 700;
+  font-size: 16px;
+  word-break: break-word;
+}
+
+.profile-input,
+.profile-textarea,
+.profile-select {
+  width: 100%;
+  background: #0f182b;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: #e7ecf7;
+}
+
+.profile-textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.file-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(244, 197, 66, 0.12);
+  color: #f4c542;
+  cursor: pointer;
+  border: 1px solid rgba(244, 197, 66, 0.3);
+}
+
+.upload-btn input {
+  display: none;
+}
+
+.profile-link {
+  color: #f4c542;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.profile-link:hover {
+  text-decoration: underline;
+}
+
+.avatar-row {
+  display: grid;
+  align-items: center;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.avatar-preview {
+  width: 120px;
+  height: 120px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.avatar-placeholder {
+  width: 120px;
+  height: 120px;
+  border-radius: 12px;
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  display: grid;
+  place-items: center;
+  color: #9fb0d2;
+}
+
+.avatar-edit {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.expertise-select {
+  display: grid;
+  gap: 8px;
+}
+
+.expertise-summary {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #0f182b;
+  color: #e7ecf7;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.expertise-dropdown {
+  background: #0f182b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.expertise-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #e7ecf7;
+}
+
+.expertise-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.chip {
+  background: rgba(244, 197, 66, 0.12);
+  color: #f4c542;
+  border: 1px solid rgba(244, 197, 66, 0.3);
+  border-radius: 999px;
+  padding: 4px 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chip button {
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-weight: 700;
+}

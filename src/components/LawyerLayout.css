@@ -1,0 +1,15 @@
+.lawyer-layout {
+  min-height: 100vh;
+  background: radial-gradient(circle at 20% 20%, rgba(244, 197, 66, 0.05), transparent 32%),
+    radial-gradient(circle at 80% 10%, rgba(139, 211, 163, 0.05), transparent 28%),
+    linear-gradient(180deg, #1a2438 0%, #0f182b 100%);
+  color: #e7ecf7;
+  padding: 0 0 36px;
+}
+
+.lawyer-layout__body {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 24px 28px 0;
+}
