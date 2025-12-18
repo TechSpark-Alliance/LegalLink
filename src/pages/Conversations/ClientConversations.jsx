@@ -29,18 +29,18 @@ const contacts = [
   },
 ];
 
-const Conversations = () => {
+const ClientConversations = () => {
   const navigate = useNavigate();
   const params = useParams();
   const activeId = params.lawyerId || params.chatId || null;
 
   const handleOpenChat = (contactId) => {
-    navigate(`/conversation/chat/${contactId}/lawyer/${contactId}`);
+    navigate(`/client/conversations/chat/${contactId}/lawyer/${contactId}`);
   };
 
   return (
     <div className="conversations-page">
-      <NavBar forceActive="/conversations" />
+      <NavBar forceActive="/client/conversations" />
       <main className="conversations-shell">
         <aside className="conversation-list">
           <div className="list-head">
@@ -99,4 +99,4 @@ const Conversations = () => {
   );
 };
 
-export default Conversations;
+export default ClientConversations;

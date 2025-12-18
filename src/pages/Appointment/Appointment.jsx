@@ -361,7 +361,7 @@ const Appointment = () => {
   if (loading) {
     return (
       <div className={styles.page}>
-        <NavBar forceActive="/appointment" />
+        <NavBar forceActive="/client/appointment" />
         <main className={styles.main}>
           <div className={styles.skeleton} />
         </main>
@@ -372,7 +372,7 @@ const Appointment = () => {
   if (notFound) {
     return (
       <div className={styles.page}>
-        <NavBar forceActive="/appointment" />
+        <NavBar forceActive="/client/appointment" />
         <main className={styles.main}>
           <div className={styles.emptyState}>
             <h2>Appointment not found</h2>
@@ -385,7 +385,7 @@ const Appointment = () => {
 
   return (
     <div className={styles.page}>
-      <NavBar forceActive="/appointment" />
+      <NavBar forceActive="/client/appointment" />
       <main className={styles.main}>
         <div className={styles.header}>
           <div>

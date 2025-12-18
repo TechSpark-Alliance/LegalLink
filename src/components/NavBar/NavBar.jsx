@@ -4,10 +4,10 @@ import styles from './NavBar.module.css';
 import logo from '../../assets/legal-link-logo.png';
 
 const links = [
-  { to: '/home/client', label: 'Home' },
-  { to: '/lawyers', label: 'Lawyers' },
-  { to: '/appointment', label: 'Appointment' },
-  { to: '/conversations', label: 'Conversations' },
+  { to: '/client/home', label: 'Home' },
+  { to: '/client/lawyers', label: 'Lawyers' },
+  { to: '/client/appointment', label: 'Appointment' },
+  { to: '/client/conversations', label: 'Conversations' },
 ];
 
 const NavBar = ({ forceActive }) => {
