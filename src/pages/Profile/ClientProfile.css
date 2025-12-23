@@ -1,0 +1,133 @@
+.client-profile-page {
+  min-height: 100vh;
+  background: #0f1422;
+  color: #e8dbd1;
+}
+
+.client-profile-main {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 48px 24px 72px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.client-profile-header .eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 12px;
+  color: rgba(232, 219, 209, 0.72);
+}
+
+.client-profile-header h1 {
+  margin: 4px 0;
+  font-size: 28px;
+}
+
+.client-profile-header .subhead {
+  color: rgba(232, 219, 209, 0.72);
+  margin: 0;
+}
+
+.card {
+  background: linear-gradient(120deg, rgba(72, 85, 99, 0.52), rgba(15, 20, 34, 0.8));
+  border: 1px solid rgba(232, 219, 209, 0.14);
+  border-radius: 16px;
+  padding: 20px 24px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.card.error {
+  border-color: #e46f6f;
+  color: #ffdede;
+}
+
+.section-title {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 18px;
+}
+
+.field-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(232, 219, 209, 0.08);
+}
+
+.field-row:last-child {
+  border-bottom: none;
+}
+
+.label {
+  color: rgba(232, 219, 209, 0.72);
+  font-size: 14px;
+}
+
+.value {
+  color: #e8dbd1;
+  font-weight: 600;
+}
+
+.field-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.field-col input {
+  background: rgba(15, 20, 34, 0.3);
+  border: 1px solid rgba(232, 219, 209, 0.14);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #e8dbd1;
+}
+
+.field-col input:focus {
+  outline: 1px solid #e3c345;
+}
+
+.input-eye-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-eye-wrap input {
+  width: 100%;
+  padding-right: 42px;
+}
+
+.eye-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #e8dbd1;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.actions .primary {
+  background: linear-gradient(120deg, #e3c345, #d2a63c);
+  color: #0f1422;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.actions .primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

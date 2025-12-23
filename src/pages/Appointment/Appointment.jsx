@@ -1,33 +1,35 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+﻿import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import NavBar from '../../components/NavBar/NavBar';
 import styles from './Appointment.module.css';
 
+const API_BASE = import.meta.env.VITE_APP_API || 'http://localhost:8000/api/v1';
+
 const defaultAppointment = {
   status: 'Pending approval',
-  referenceId: 'LL-20251216-0018',
-  start: '2025-12-16T11:00:00',
+  referenceId: '',
+  start: null,
   durationMinutes: 60,
   mode: 'In-person',
   appointmentType: 'Initial consultation',
   location: {
-    name: 'Jung & Co.',
-    address: 'Jalan Ampang (Main)',
+    name: '',
+    address: '',
   },
   meetingLink: null,
   lawyer: {
-    name: 'Krystal Jung',
-    firm: 'Jung & Co.',
-    email: 'krystal.jung@jungandco.my',
-    phone: '+60 3-1234 5678',
+    name: '',
+    firm: '',
+    email: '',
+    phone: '',
   },
   client: {
-    name: 'Alicia Tan',
-    email: 'alicia.tan@example.com',
-    phone: '+60 12-345 6789',
+    name: '',
+    email: '',
+    phone: '',
   },
   caseDetails: {
-    practiceArea: 'Family & Personal Matters',
+    practiceArea: '',
     preferredLanguage: 'No preference',
     conflictCheckNames: null,
     issueSummary: null,
@@ -57,13 +59,93 @@ const getStoredUser = () => {
 
 const getStoredAppointment = () => {
   if (typeof window === 'undefined') return null;
+  const read = (store) => {
+    try {
+      const raw = store.getItem('ll_latest_appointment');
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  };
+  return read(sessionStorage) || read(localStorage);
+};
+
+const saveStoredAppointment = (apt) => {
+  if (typeof window === 'undefined') return;
   try {
-    const raw = localStorage.getItem('ll_latest_appointment');
-    if (!raw) return null;
-    return JSON.parse(raw);
+    const payload = JSON.stringify(apt);
+    sessionStorage.setItem('ll_latest_appointment', payload);
+    localStorage.setItem('ll_latest_appointment', payload);
   } catch {
-    return null;
+    /* ignore */
   }
+};
+
+const clearStoredAppointment = () => {
+  if (typeof window === 'undefined') return;
+  try {
+    sessionStorage.removeItem('ll_latest_appointment');
+    localStorage.removeItem('ll_latest_appointment');
+  } catch {
+    /* ignore */
+  }
+};
+
+// Prefer the most recent tab/session token to avoid using a stale token left in localStorage.
+const getAuthToken = () =>
+  (typeof window !== 'undefined' &&
+    (sessionStorage.getItem('token') || localStorage.getItem('token') || '')) ||
+  '';
+
+const sanitizeAppointment = (apt) => {
+  if (!apt) return defaultAppointment;
+  const lawyer = apt.lawyer || {};
+  const client = apt.client || {};
+  const mappedCaseDetails = apt.caseDetails || apt.case_details || {};
+  return {
+    ...defaultAppointment,
+    ...apt,
+    id: apt.id || apt._id || apt.referenceId || '',
+    start:
+      apt.start ||
+      // Normalize date + time into an ISO-ish string so downstream displays can build a Date.
+      (apt.date && apt.time ? `${apt.date}T${apt.time}` : null),
+    appointmentType: apt.appointmentType || apt.appointment_type || defaultAppointment.appointmentType,
+    durationMinutes: apt.durationMinutes || apt.duration_minutes || defaultAppointment.durationMinutes,
+    meetingLink: apt.meetingLink || apt.meeting_link || null,
+    lawyer: {
+      name: lawyer.full_name || lawyer.name || '',
+      firm: lawyer.law_firm || lawyer.firm || '',
+      email: lawyer.email || '',
+      phone: lawyer.phone || '',
+    },
+    client: {
+      name: client.full_name || client.name || '',
+      email: client.email || '',
+      phone: client.phone || client.phone_number || client.mobile || '',
+    },
+    caseDetails: {
+      ...defaultAppointment.caseDetails,
+      ...(mappedCaseDetails || {}),
+      preferredLanguage:
+        mappedCaseDetails.preferredLanguage ||
+        mappedCaseDetails.preferred_language ||
+        defaultAppointment.caseDetails.preferredLanguage,
+      conflictCheckNames:
+        mappedCaseDetails.conflictCheckNames ||
+        mappedCaseDetails.conflict_check_names ||
+        defaultAppointment.caseDetails.conflictCheckNames,
+      issueSummary:
+        mappedCaseDetails.issueSummary ||
+        mappedCaseDetails.issue_summary ||
+        defaultAppointment.caseDetails.issueSummary,
+      specialRequests:
+        mappedCaseDetails.specialRequests ||
+        mappedCaseDetails.special_requests ||
+        defaultAppointment.caseDetails.specialRequests,
+    },
+  };
 };
 
 const formatDate = (date) =>
@@ -302,33 +384,88 @@ const RescheduleModal = ({
 
 const Appointment = () => {
   const navigate = useNavigate();
-  const [appointment, setAppointment] = useState(() => getStoredAppointment() || defaultAppointment);
+  const routerLocation = useLocation();
+  const token = getAuthToken();
+  const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+  const [appointment, setAppointment] = useState(() => sanitizeAppointment(getStoredAppointment()));
+  const [appointmentsList, setAppointmentsList] = useState(() => {
+    const stored = sanitizeAppointment(getStoredAppointment());
+    return stored && stored.id ? [stored] : [];
+  });
+  const [activeAppointmentId, setActiveAppointmentId] = useState(
+    () => (appointment && appointment.id) || null
+  );
+  const [lawyerProfile, setLawyerProfile] = useState(null);
   const [isRescheduleOpen, setIsRescheduleOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(Object.keys(mockAvailability)[0] || '');
   const [selectedSlot, setSelectedSlot] = useState('');
   const [selectedDuration, setSelectedDuration] = useState(appointment.durationMinutes);
   const [rescheduleMessage, setRescheduleMessage] = useState('');
   const [showDetails, setShowDetails] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
     const stored = getStoredAppointment();
     if (stored) {
-      setAppointment(stored);
-      setSelectedDuration(stored.durationMinutes || appointment.durationMinutes);
+      const cleaned = sanitizeAppointment(stored);
+      setAppointment(cleaned);
+      if (cleaned && cleaned.id) setAppointmentsList([cleaned]);
+      setActiveAppointmentId(cleaned.id || null);
+      setSelectedDuration(cleaned.durationMinutes || appointment.durationMinutes);
+      setNotFound(false);
     }
   }, []);
+
+  useEffect(() => {
+    const loadLawyer = async () => {
+      if (!appointment.lawyer_id) return;
+      setLoading(true);
+      try {
+        const res = await fetch(`${API_BASE}/lawyers/${appointment.lawyer_id}`, {
+          headers: authHeaders,
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+          setLawyerProfile(data.lawyer || data.user || data.profile || data);
+        }
+            } catch {
+        /* ignore */
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (!appointment.lawyer?.name && appointment.lawyer_id) {
+      loadLawyer();
+    }
+  }, [appointment.lawyer?.name, appointment.lawyer_id]);
 
   const isOnline = useMemo(
     () => (appointment.mode || '').toLowerCase().includes('online') || (appointment.mode || '').toLowerCase().includes('video'),
     [appointment.mode]
   );
 
-  const appointmentStart = useMemo(() => new Date(appointment.start), [appointment.start]);
-  const rescheduleDeadline = useMemo(
-    () => new Date(appointmentStart.getTime() - 7 * 24 * 60 * 60 * 1000),
-    [appointmentStart]
-  );
-  const canReschedule = useMemo(() => Date.now() <= rescheduleDeadline.getTime(), [rescheduleDeadline]);
+  const appointmentStart = useMemo(() => {
+    // If ISO start exists, respect it (assumed UTC or ISO local).
+    if (appointment.start) return new Date(appointment.start);
+    // Otherwise, build from date + time (both are stored as strings from the booking payload).
+    if (appointment.date && appointment.time) {
+      const [h, m] = String(appointment.time).split(':').map(Number);
+      const parts = String(appointment.date).split('-').map(Number); // YYYY,MM,DD
+      const base = new Date(parts[0], (parts[1] || 1) - 1, parts[2] || 1);
+      base.setHours(h || 0, m || 0, 0, 0);
+      return base;
+    }
+    return null;
+  }, [appointment.start, appointment.date, appointment.time]);
+  const rescheduleDeadline = useMemo(() => {
+    if (!appointmentStart) return null;
+    return new Date(appointmentStart.getTime() - 7 * 24 * 60 * 60 * 1000);
+  }, [appointmentStart]);
+  const canReschedule = useMemo(() => {
+    if (!rescheduleDeadline) return false;
+    return Date.now() <= rescheduleDeadline.getTime();
+  }, [rescheduleDeadline]);
 
   const clientDetails = useMemo(() => {
     const stored = getStoredUser();
@@ -342,12 +479,33 @@ const Appointment = () => {
     };
   }, [appointment.client]);
 
-  const loading = false;
-  const notFound = false;
-  const statusTone = appointment.status === 'Pending approval' ? 'amber' : 'success';
-  const progressPercent = appointment.status === 'Pending approval' ? 40 : 70;
+  const lawyerDetails = useMemo(() => {
+    const lawyer = appointment.lawyer || {};
+    const profile = lawyerProfile || {};
+    return {
+      name: lawyer.name || profile.full_name || profile.name || 'Not provided',
+      firm: lawyer.firm || profile.law_firm || 'Not provided',
+      email: lawyer.email || profile.email || 'Not provided',
+      phone: lawyer.phone || profile.phone || 'Not provided',
+    };
+  }, [appointment.lawyer, lawyerProfile]);
+  const normalizedStatus = useMemo(() => {
+    const s = (appointment.status || '').toLowerCase();
+    if (s.includes('reject')) return 'rejected';
+    if (s.includes('pending')) return 'pending';
+    if (s.includes('cancel')) return 'cancelled';
+    if (s.includes('accept')) return 'accepted';
+    if (s.includes('confirm')) return 'accepted';
+    return s || 'pending';
+  }, [appointment.status]);
+  const statusTone = normalizedStatus === 'pending' ? 'amber' : normalizedStatus === 'rejected' ? 'error' : 'success';
+  const progressPercent = normalizedStatus === 'pending' ? 50 : 100;
   const progressStatus =
-    appointment.status === 'Pending approval' ? 'Awaiting payment & approval' : 'Confirmed - upcoming';
+    normalizedStatus === 'pending'
+      ? 'Awaiting approval'
+      : normalizedStatus === 'rejected'
+      ? 'Rejected'
+      : 'Confirmed - upcoming';
 
   const handleConfirmReschedule = () => {
     setIsRescheduleOpen(false);
@@ -357,6 +515,183 @@ const Appointment = () => {
   };
 
   const handleToggleDetails = () => setShowDetails((prev) => !prev);
+  const handleSelectAppointment = (apt) => {
+    const cleaned = sanitizeAppointment(apt);
+    setAppointment(cleaned);
+    setActiveAppointmentId(cleaned.id || null);
+    setShowDetails(true);
+  };
+
+    // Always refresh the appointment from API (ensures latest status/reason after lawyer updates).
+  useEffect(() => {
+    if (!appointment.id) return;
+    const controller = new AbortController();
+    const loadAppointment = async () => {
+      setLoading(true);
+      try {
+        const token = getAuthToken();
+        const res = await fetch(`${API_BASE}/lawyers/appointments/${appointment.id}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          signal: controller.signal,
+        });
+        if (res.status === 404) {
+          // If we already have an appointment cached, treat this as "rejected" instead of not-found
+          // so the user can still see the last known details.
+          if (appointment.id) {
+            setAppointment((prev) => ({ ...prev, status: 'Rejected' }));
+            setNotFound(false);
+          } else {
+            setNotFound(true);
+            setAppointment(defaultAppointment);
+          }
+          return;
+        }
+        if (!res.ok) return;
+        const data = await res.json().catch(() => null);
+        if (data) {
+          const cleaned = sanitizeAppointment(data);
+          setAppointment(cleaned);
+          setActiveAppointmentId(cleaned.id || null);
+          setAppointmentsList((prev) => {
+            const others = prev.filter((a) => a.id !== cleaned.id);
+            return cleaned.id ? [cleaned, ...others] : [cleaned, ...others];
+          });
+          setNotFound(false);
+          saveStoredAppointment(cleaned);
+        }
+      } catch {
+        /* ignore */
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadAppointment();
+    return () => controller.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appointment.id]);
+
+  // If an appointment id is provided via query (?id=...), fetch it directly.
+  useEffect(() => {
+    const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+    const id = params.get('id');
+    if (!id) return;
+    if (appointment.id && appointment.id === id) return;
+    const token = getAuthToken();
+    const controller = new AbortController();
+    const loadById = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/lawyers/appointments/${id}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          signal: controller.signal,
+        });
+        if (!res.ok) return;
+        const data = await res.json().catch(() => null);
+        if (data) {
+          const cleaned = sanitizeAppointment(data);
+          setAppointment(cleaned);
+          setActiveAppointmentId(cleaned.id || null);
+          setAppointmentsList((prev) => {
+            const others = prev.filter((a) => a.id !== cleaned.id);
+            return cleaned.id ? [cleaned, ...others] : [cleaned, ...others];
+          });
+          setNotFound(false);
+          saveStoredAppointment(cleaned);
+        }
+      } catch {
+        /* ignore */
+      }
+    };
+    loadById();
+    return () => controller.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appointment.id]);
+
+  // Fetch latest appointments for this client (most recent first) once on mount.
+  useEffect(() => {
+    const token = getAuthToken();
+    if (!token) return;
+    const controller = new AbortController();
+    const loadLatest = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`${API_BASE}/lawyers/appointments/client`, {
+          headers: authHeaders,
+          signal: controller.signal,
+        });
+        if (!res.ok) {
+          const cached = getStoredAppointment();
+          if (cached) {
+            const cleanedCached = sanitizeAppointment(cached);
+            setAppointment(cleanedCached);
+            setActiveAppointmentId(cleanedCached.id || null);
+            setAppointmentsList(cleanedCached.id ? [cleanedCached] : []);
+            setNotFound(false);
+          } else {
+            setNotFound(true);
+          }
+          return;
+        }
+        const data = await res.json().catch(() => []);
+        const list = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.appointments)
+          ? data.appointments
+          : [];
+        if (list.length > 0) {
+          const cleanedList = list.map((item) => sanitizeAppointment(item)).filter(Boolean);
+          const latest = cleanedList[0];
+          setAppointment(latest);
+          setActiveAppointmentId(latest?.id || null);
+          setAppointmentsList(cleanedList);
+          setNotFound(false);
+          saveStoredAppointment(latest);
+        } else {
+          setNotFound(true);
+          setAppointment(defaultAppointment);
+        }
+      } catch {
+        // If API fails, fall back to any cached appointment rather than showing empty state.
+        const cached = getStoredAppointment();
+        if (cached) {
+          const cleanedCached = sanitizeAppointment(cached);
+          setAppointment(cleanedCached);
+          setActiveAppointmentId(cleanedCached.id || null);
+          setAppointmentsList(cleanedCached.id ? [cleanedCached] : []);
+          setNotFound(false);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadLatest();
+    return () => controller.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+const handleCancel = async () => {
+    if (!appointment.id) return;
+    const confirm = window.confirm('Cancel this appointment?');
+    if (!confirm) return;
+    const token = getAuthToken();
+    try {
+      const res = await fetch(`${API_BASE}/lawyers/appointments/${appointment.id}`, {
+        method: 'DELETE',
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.detail || 'Failed to cancel appointment');
+      }
+      setAppointment(defaultAppointment);
+      clearStoredAppointment();
+      setAppointmentsList((prev) => prev.filter((a) => a.id !== appointment.id));
+      setActiveAppointmentId(null);
+    } catch (err) {
+      // eslint-disable-next-line no-alert
+      alert(err.message || 'Failed to cancel appointment');
+    }
+  };
 
   if (loading) {
     return (
@@ -369,7 +704,7 @@ const Appointment = () => {
     );
   }
 
-  if (notFound) {
+  if (notFound || !appointmentStart) {
     return (
       <div className={styles.page}>
         <NavBar forceActive="/client/appointment" />
@@ -396,69 +731,84 @@ const Appointment = () => {
         </div>
 
         <section className={styles.summaryGrid}>
-          <article
-            className={styles.summaryCard}
-            onClick={handleToggleDetails}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleToggleDetails()}
-          >
-            <div className={styles.summaryTop}>
-              <Chip tone={appointment.status === 'Pending approval' ? 'Amber' : 'Success'}>
-                {appointment.status}
-              </Chip>
-            </div>
-            <div className={styles.summaryHero}>
-              <div>
-                <div className={styles.summaryDate}>{formatDate(appointmentStart)}</div>
-                <div className={styles.summaryTime}>{formatTime(appointmentStart)}</div>
-              </div>
-              <div className={styles.summaryMeta}>
-                <Chip>{appointment.mode}</Chip>
-                <Chip>{appointment.durationMinutes} min</Chip>
-                <Chip>{appointment.appointmentType}</Chip>
-              </div>
-            </div>
-            <div className={styles.summaryLocation}>
-              {isOnline
-                ? appointment.meetingLink || 'Online'
-                : `${appointment.location?.name || 'Not provided'}${
-                    appointment.location?.address ? `, ${appointment.location.address}` : ''
-                  }`}
-            </div>
-            <div className={styles.progressBlock}>
-              <div className={styles.progressLabels}>
-                <span>Progress</span>
-                <span className={styles.progressStatus}>{progressStatus}</span>
-              </div>
-              <div className={styles.progressTrack}>
-                <div className={styles.progressFill} style={{ width: `${progressPercent}%` }} />
-              </div>
-              <div className={styles.progressSteps}>
-                <span className={styles.stepActive}>Payment</span>
-                <span className={appointment.status === 'Pending approval' ? styles.stepMuted : styles.stepActive}>
-                  Lawyer approval
-                </span>
-                <span className={styles.stepMuted}>Meeting</span>
-                <span className={styles.stepMuted}>Complete</span>
-              </div>
-            </div>
-            <div className={styles.summaryActions}>
-              <span className={styles.summaryLink}>
-                {showDetails ? 'Hide details' : 'View details'}
-              </span>
-              <div className={styles.summaryHelper}>
-                {canReschedule ? `Reschedule until ${formatDateTime(rescheduleDeadline)}` : 'Rescheduling closed'}
-              </div>
-            </div>
-          </article>
+          {(appointmentsList.length ? appointmentsList : appointment.id ? [appointment] : []).map((apt) => {
+            const start =
+              apt.start ? new Date(apt.start) : apt.date && apt.time ? new Date(`${apt.date}T${apt.time}`) : null;
+            const statusLower = (apt.status || '').toLowerCase();
+            const tone =
+              statusLower === 'rejected' ? 'Error' : statusLower === 'pending' ? 'Amber' : statusLower === 'cancelled' ? 'Muted' : 'Success';
+            const isCardOnline =
+              (apt.mode || '').toLowerCase().includes('online') || (apt.mode || '').toLowerCase().includes('video');
+            const isActiveCard = activeAppointmentId ? activeAppointmentId === apt.id : appointment.id === apt.id;
+            return (
+              <article
+                key={apt.id || `${apt.date}-${apt.time}`}
+                className={`${styles.summaryCard} ${isActiveCard ? styles.summaryActive : ''}`}
+                onClick={() => {
+                  const cleaned = sanitizeAppointment(apt);
+                  setAppointment(cleaned);
+                  setActiveAppointmentId(cleaned.id || null);
+                  setShowDetails(true);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    const cleaned = sanitizeAppointment(apt);
+                    setAppointment(cleaned);
+                    setActiveAppointmentId(cleaned.id || null);
+                    setShowDetails(true);
+                  }
+                }}
+              >
+                <div className={styles.summaryTop}>
+                  <Chip tone={tone}>{apt.status || 'Pending'}</Chip>
+                </div>
+                <div className={styles.summaryHero}>
+                  <div>
+                    <div className={styles.summaryDate}>{start ? formatDate(start) : 'Date TBD'}</div>
+                    <div className={styles.summaryTime}>{start ? formatTime(start) : 'Time TBD'}</div>
+                  </div>
+                  <div className={styles.summaryMeta}>
+                    <Chip>{apt.mode}</Chip>
+                    <Chip>{apt.durationMinutes || apt.duration_minutes || 60} min</Chip>
+                    <Chip>{apt.appointmentType || apt.appointment_type}</Chip>
+                  </div>
+                </div>
+                <div className={styles.summaryLocation}>
+                  {isCardOnline
+                    ? apt.meetingLink || 'Online'
+                    : `${apt.location?.name || 'Not provided'}${
+                        apt.location?.address ? `, ${apt.location.address}` : ''
+                      }`}
+                </div>
+                <div className={styles.summaryActions}>
+                  <button
+                    type="button"
+                    className={styles.summaryLinkButton || styles.summaryLink}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSelectAppointment(apt);
+                    }}
+                  >
+                    {isActiveCard && showDetails ? 'Viewing details' : 'View details'}
+                  </button>
+                  <div className={styles.summaryHelper}>
+                    {statusLower === 'rejected'
+                      ? 'Rejected'
+                      : statusLower === 'pending'
+                      ? 'Awaiting approval'
+                      : 'Confirmed'}
+                  </div>
+                </div>
+              </article>
+            );
+          })}
         </section>
 
         {showDetails && (
           <>
             <section className={styles.primaryCard}>
               <AppointmentHero
-                data={appointment}
+                data={{ ...appointment, start: appointmentStart.toISOString() }}
                 rescheduleDeadline={rescheduleDeadline}
                 canReschedule={canReschedule}
               />
@@ -485,6 +835,11 @@ const Appointment = () => {
                   >
                     Reschedule
                   </button>
+                  {normalizedStatus !== 'cancelled' && (
+                    <button type="button" className={styles.secondaryBtn} onClick={handleCancel}>
+                      Cancel appointment
+                    </button>
+                  )}
                 </div>
               </div>
             </section>
@@ -500,22 +855,20 @@ const Appointment = () => {
                   </div>
                   <div className={styles.card}>
                     <p className={styles.cardTitle}>Lawyer</p>
-                    <InfoRow label="Name" value={appointment.lawyer?.name} />
-                    <InfoRow label="Firm" value={appointment.lawyer?.firm} />
-                    <InfoRow label="Email" value={appointment.lawyer?.email} />
-                    <InfoRow label="Phone" value={appointment.lawyer?.phone} />
+                    <InfoRow label="Name" value={lawyerDetails.name} />
+                    <InfoRow label="Firm" value={lawyerDetails.firm} />
+                    <InfoRow label="Email" value={lawyerDetails.email} />
+                    <InfoRow label="Phone" value={lawyerDetails.phone} />
                   </div>
                 </div>
               </InfoSection>
 
               <InfoSection title="Case details">
                 <div className={styles.card}>
-                  <InfoRow label="Practice area" value={appointment.caseDetails?.practiceArea} />
                   <InfoRow label="Preferred language" value={appointment.caseDetails?.preferredLanguage} />
                   <InfoRow label="Conflict-check names" value={appointment.caseDetails?.conflictCheckNames} />
                   <InfoRow label="Issue summary" value={appointment.caseDetails?.issueSummary} />
                   <InfoRow label="Special requests/notes" value={appointment.caseDetails?.specialRequests} />
-                  <InfoRow label="Uploads" value={appointment.caseDetails?.uploads} />
                 </div>
               </InfoSection>
             </section>

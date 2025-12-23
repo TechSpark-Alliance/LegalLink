@@ -9,59 +9,119 @@ const lawyerDirectory = {
   'david-lau': { name: 'David Lau', specialty: 'Family Law', location: 'Penang', status: 'Typically replies in a day' },
 };
 
-const baseThreads = {
-  'krystal-jung': [
-    { id: 'm1', from: 'lawyer', text: "Hi, I reviewed your documents. Let's finalize the purchase agreement.", time: '1:02 PM' },
-    { id: 'c1', from: 'client', text: 'Thank you. I want to make sure the penalty clause is fair.', time: '1:04 PM' },
-    { id: 'm2', from: 'lawyer', text: "Understood. I'll highlight the risks and propose safer wording.", time: '1:06 PM' },
-    { id: 'c2', from: 'client', text: 'There is also an addendum with new conditions.', time: '1:08 PM' },
-    { id: 'm3', from: 'lawyer', text: 'Please share that. I will merge it into the review.', time: '1:10 PM' },
-    { id: 'c3', from: 'client', text: 'Uploading now.', time: '1:12 PM' },
-    { id: 'c4', from: 'client', text: 'Let me know if you can soften the penalty language.', time: '1:14 PM' },
-    { id: 'm4', from: 'lawyer', text: 'Yes. I can add a cure period and cap the exposure.', time: '1:16 PM' },
-    { id: 'c5', from: 'client', text: 'Great, a cure period sounds right.', time: '1:18 PM' },
-    { id: 'c6', from: 'client', text: 'Please also check assignment terms.', time: '1:20 PM' },
-    { id: 'm5', from: 'lawyer', text: 'Will do. I will ensure any assignment needs your written consent.', time: '1:22 PM' },
-    { id: 'c7', from: 'client', text: 'Perfect. Timeline looks tight; any risk there?', time: '1:24 PM' },
-    { id: 'c8', from: 'client', text: 'They asked for completion within 30 days.', time: '1:25 PM' },
-    { id: 'm6', from: 'lawyer', text: 'We can add milestone-based extensions if delays are out of your control.', time: '1:27 PM' },
-    { id: 'c9', from: 'client', text: 'Please draft that.', time: '1:29 PM' },
-    { id: 'c10', from: 'client', text: 'Is there anything else I should flag?', time: '1:31 PM' },
-    { id: 'm7', from: 'lawyer', text: "I'll also check indemnities and limitation of liability.", time: '1:33 PM' },
-    { id: 'c11', from: 'client', text: 'Thanks. I want a clear liability cap.', time: '1:35 PM' },
-    { id: 'c12', from: 'client', text: 'And mutual confidentiality.', time: '1:36 PM' },
-    { id: 'm8', from: 'lawyer', text: 'Noted. I will insert mutual confidentiality language.', time: '1:38 PM' },
-    { id: 'c13', from: 'client', text: 'Appreciate the quick turnaround.', time: '1:40 PM' },
-    { id: 'c14', from: 'client', text: 'Let me know when the revised draft is ready.', time: '1:42 PM' },
-  ],
-};
-
 const MAX_CLIENT_MESSAGES = 15;
+const API_BASE = import.meta.env.VITE_APP_API || 'http://localhost:8000/api/v1';
 
-export const ChatView = ({ activeId, embedded = false }) => {
+export const ChatView = ({ activeId, embedded = false, directory = lawyerDirectory }) => {
   const navigate = useNavigate();
-  const lawyer = lawyerDirectory[activeId] || { name: 'Your Lawyer', specialty: 'Legal', status: 'Typically replies in a day' };
+  const [remoteProfile, setRemoteProfile] = useState(null);
+  const [avatarUrl, setAvatarUrl] = useState(null);
 
-  const [threads, setThreads] = useState(() => ({
-    ...baseThreads,
-  }));
+  const lawyer =
+    directory[activeId] ||
+    remoteProfile || { name: 'Your Lawyer', specialty: 'Legal', status: 'Typically replies in a day' };
+  const [conversationId, setConversationId] = useState(null);
+  const [thread, setThread] = useState([]);
   const [input, setInput] = useState('');
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [lockedChats, setLockedChats] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const token =
+    localStorage.getItem('token') ||
+    sessionStorage.getItem('token') ||
+    '';
+
+  const sanitizeId = (val) => (val ? String(val).replace(/"/g, '') : '');
+  const currentUserId = sanitizeId(
+    localStorage.getItem('user_id') ||
+      sessionStorage.getItem('user_id') ||
+      localStorage.getItem('id') ||
+      sessionStorage.getItem('id') ||
+      ''
+  );
+
+  const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+
+  const buildImageUrl = (src) => {
+    if (!src) return null;
+    const val = String(src);
+    if (val.startsWith('http')) return val;
+    const root = API_BASE.replace(/\/api\/v1.*$/, '');
+    return `${root}${val.startsWith('/') ? '' : '/'}${val}`;
+  };
 
   useEffect(() => {
-    setThreads((prev) => {
-      if (prev[activeId]) return prev;
-      return { ...prev, [activeId]: [] };
-    });
+    const load = async () => {
+      if (!activeId || !token) {
+        setThread([]);
+        return;
+      }
+      setLoading(true);
+      setError('');
+      try {
+        const resConv = await fetch(`${API_BASE}/chat/conversations`, { headers: authHeaders });
+        if (!resConv.ok) throw new Error('Failed to load conversations');
+        const convs = await resConv.json();
+        const found = convs.find((c) => Array.isArray(c.participants) && c.participants.includes(activeId));
+        const convId = found ? found.id : null;
+        setConversationId(convId);
+
+        if (convId) {
+          const resMsgs = await fetch(`${API_BASE}/chat/conversations/${convId}/messages`, { headers: authHeaders });
+          if (!resMsgs.ok) throw new Error('Failed to load messages');
+          const msgs = await resMsgs.json();
+          setThread(msgs);
+        } else {
+          setThread([]);
+        }
+      } catch (err) {
+        setError(err.message || 'Failed to load chat');
+        setThread([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeId]);
 
-  const thread = threads[activeId] || [];
-  const clientCount = thread.filter((msg) => msg.from === 'client').length;
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (directory[activeId]) {
+        setRemoteProfile(null);
+        setAvatarUrl(directory[activeId].image || null);
+        return;
+      }
+      if (!activeId) return;
+      try {
+        const res = await fetch(`${API_BASE}/lawyers/${activeId}`, { headers: authHeaders });
+        if (!res.ok) return;
+        const data = await res.json();
+        const profile = data.lawyer || data.profile || data.user || data;
+        if (profile) {
+          const img = buildImageUrl(profile.profile_image || profile.avatar || profile.image);
+          setRemoteProfile({
+            name: profile.full_name || profile.name || 'Your Lawyer',
+            status: 'Active now',
+            image: img,
+          });
+          setAvatarUrl(img || null);
+        }
+      } catch {
+        /* ignore */
+      }
+    };
+    fetchProfile();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeId]);
+
+  const clientCount = thread.filter((msg) => String(msg.sender_id || '') !== String(activeId)).length;
   const isKrystal = activeId === 'krystal-jung';
   const limitReached = lockedChats[activeId] === true;
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!input.trim()) return;
     const threshold = isKrystal ? MAX_CLIENT_MESSAGES - 1 : MAX_CLIENT_MESSAGES;
     if (clientCount >= threshold || limitReached) {
@@ -69,16 +129,37 @@ export const ChatView = ({ activeId, embedded = false }) => {
       setLockedChats((prev) => ({ ...prev, [activeId]: true }));
       return;
     }
-    const newMessage = {
-      id: `c-${Date.now()}`,
-      from: 'client',
+    const body = {
       text: input.trim(),
-      time: 'Now',
+      ...(conversationId ? { conversation_id: conversationId } : { to_user_id: activeId }),
     };
-    setThreads((prev) => ({
-      ...prev,
-      [activeId]: [...(prev[activeId] || []), newMessage],
-    }));
+    try {
+      setError('');
+      const res = await fetch(`${API_BASE}/chat/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...authHeaders,
+        },
+        body: JSON.stringify(body),
+      });
+      if (res.status === 403) {
+        setShowLimitModal(true);
+        setLockedChats((prev) => ({ ...prev, [activeId]: true }));
+        return;
+      }
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.detail || 'Failed to send message');
+      }
+      const msg = await res.json();
+      if (!conversationId && msg.conversation_id) {
+        setConversationId(msg.conversation_id);
+      }
+      setThread((prev) => [...prev, msg]);
+    } catch (err) {
+      setError(err.message || 'Failed to send message');
+    }
     setInput('');
   };
 
@@ -93,11 +174,45 @@ export const ChatView = ({ activeId, embedded = false }) => {
     navigate(`/client/lawyers/lawyer/${activeId}/book-appointment`);
   };
 
+  const formatTimestamp = (value) => {
+    if (!value) return 'Now';
+    const raw = String(value).trim();
+    const match = raw.match(
+      /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(\.\d{1,6})?/
+    );
+    const normalized = match
+      ? `${match[1]}${match[2] ? match[2].slice(0, 4) : ''}Z`
+      : `${raw}${raw.endsWith('Z') ? '' : 'Z'}`;
+    const date = new Date(normalized);
+    if (Number.isNaN(date.getTime())) return raw;
+    return date.toLocaleString('en-MY', {
+      timeZone: 'Asia/Kuala_Lumpur',
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true,
+      timeZoneName: 'short',
+    });
+  };
+
   return (
     <main className={`chat-shell ${embedded ? 'chat-shell-embedded' : ''}`}>
       <header className="chat-header">
         <div className="chat-meta">
-          <span className="chat-avatar">{lawyer.name.slice(0, 2)}</span>
+          <span className="chat-avatar">
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt={lawyer.name}
+                onError={() => setAvatarUrl(null)}
+              />
+            ) : (
+              (lawyer.name || 'Your Lawyer').slice(0, 2)
+            )}
+          </span>
           <div>
             <div className="chat-name">{lawyer.name}</div>
             <div className="chat-status">
@@ -117,19 +232,27 @@ export const ChatView = ({ activeId, embedded = false }) => {
       </header>
 
       <section className="chat-thread" aria-live="polite">
-        {thread.length === 0 && !isKrystal ? (
+        {loading ? (
+          <div className="thread-empty">Loading messages…</div>
+        ) : thread.length === 0 ? (
           <div className="thread-empty">No messages yet.</div>
         ) : (
-          thread.map((msg) => (
-            <div
-              key={msg.id}
-              className={`bubble ${msg.from === 'client' ? 'bubble-client' : 'bubble-lawyer'}`}
-            >
-              <p>{msg.text}</p>
-              <span className="bubble-time">{msg.time}</span>
-            </div>
-          ))
+          thread.map((msg) => {
+            const sender = String(msg.sender_id || '').replace(/"/g, '');
+            const isSelf = currentUserId
+              ? sender === currentUserId
+              : sender !== String(activeId || '');
+            const bubbleClass = isSelf ? 'bubble bubble-self' : 'bubble bubble-other';
+            const createdAt = formatTimestamp(msg.created_at);
+            return (
+              <div key={msg.id} className={bubbleClass}>
+                <p>{msg.text}</p>
+                <span className="bubble-time">{createdAt}</span>
+              </div>
+            );
+          })
         )}
+        {error && <div className="thread-empty">{error}</div>}
       </section>
 
       <footer className="chat-composer">

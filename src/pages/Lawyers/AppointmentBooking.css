@@ -320,6 +320,11 @@ textarea:focus {
   transition: all 120ms ease;
 }
 
+.day-disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 .day-selected {
   background: var(--color-accent);
   color: var(--color-text-dark);
@@ -327,7 +332,7 @@ textarea:focus {
   border-color: transparent;
 }
 
-.day:hover:not(.day-selected) {
+.day:hover:not(.day-selected):not(.day-disabled) {
   border-color: rgba(227, 195, 69, 0.4);
 }
 

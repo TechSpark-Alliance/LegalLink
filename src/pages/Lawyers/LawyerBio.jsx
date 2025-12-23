@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import NavBar from '../../components/NavBar/NavBar';
-import { lawyersData } from './lawyersData';
 import './LawyerBio.css';
 
 const API_BASE = import.meta.env.VITE_APP_API || 'http://localhost:8000/api/v1';
@@ -29,8 +28,8 @@ const buildProfile = (raw) => {
     reviewQuote: raw.review?.quote || raw.reviews?.[0]?.text || 'No reviews yet for this lawyer.',
     reviewReviewer: raw.review?.reviewer || raw.reviews?.[0]?.reviewer || 'Client',
     reviewStars: raw.review?.stars || raw.reviews?.[0]?.stars || '5',
-    firmName: raw.firm?.name || raw.law_firm || raw.lawFirm || 'Firm name',
-    firmAddress: raw.firm?.address || raw.address || 'Firm address',
+    firmName: raw.firm?.name || raw.law_firm || raw.lawFirm || '-',
+    firmAddress: raw.firm?.address || raw.address || '-',
     firmPhone: raw.firm?.office || raw.phone || raw.phone_number || 'Firm office number',
     firmEmail: raw.firm?.email || raw.email || 'Firm email',
     image: raw.profile_image || raw.profileImage || raw.image || '',
@@ -66,7 +65,7 @@ const LawyerBio = () => {
       setLoading(true);
       setError('');
       try {
-        const res = await fetch(`${API_BASE}/auth/lawyers/${id}`);
+        const res = await fetch(`${API_BASE}/lawyers/${id}`);
         if (!res.ok) {
           throw new Error('Failed to load lawyer');
         }
@@ -75,13 +74,8 @@ const LawyerBio = () => {
         const normalized = buildProfile(raw);
         if (isMounted) setProfile(normalized);
       } catch (err) {
-        const fallback = buildProfile(lawyersData[id]);
         if (isMounted) {
-          if (fallback) {
-            setProfile(fallback);
-          } else {
-            setError(err.message || 'Failed to load lawyer');
-          }
+          setError(err.message || 'Failed to load lawyer');
         }
       } finally {
         if (isMounted) setLoading(false);
@@ -154,9 +148,6 @@ const LawyerBio = () => {
             <div className="bio-review">
               <div className="bio-review-title">Reviews</div>
               <p className="bio-review-quote">"{profile.reviewQuote}"</p>
-              <p className="bio-review-meta">
-                - {profile.reviewReviewer} rated {profile.reviewStars} stars
-              </p>
             </div>
           </div>
 
