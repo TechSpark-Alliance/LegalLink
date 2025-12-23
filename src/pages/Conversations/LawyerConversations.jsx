@@ -1,151 +1,199 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import LawyerLayout from '../../components/LawyerLayout';
+import { ChatView } from '../Chat/Chat';
 import './Conversations.css';
 import '../Chat/Chat.css';
 
-const clients = [
-  {
-    id: 'alicia-tan',
-    name: 'Alicia Tan',
-    title: 'Family Law - Kuala Lumpur',
-    lastMessage: 'Thank you, I have shared the documents.',
-    time: '3:18 PM',
-    online: true,
-  },
-  {
-    id: 'mohd-hakim',
-    name: 'Mohd Hakim',
-    title: 'Corporate - Selangor',
-    lastMessage: 'Can we move the meeting to Friday?',
-    time: 'Yesterday',
-  },
-  {
-    id: 'serene-ong',
-    name: 'Serene Ong',
-    title: 'Property - Penang',
-    lastMessage: 'I just uploaded the updated contract.',
-    time: 'Mon',
-  },
-];
+const API_BASE = import.meta.env.VITE_APP_API || 'http://localhost:8000/api/v1';
 
-const threads = {
-  'alicia-tan': [
-    { id: 'c1', from: 'client', text: 'I just submitted the supporting docs.', time: '2:42 PM' },
-    { id: 'l1', from: 'lawyer', text: 'Got it. I will review tonight and update you.', time: '2:48 PM' },
-    { id: 'c2', from: 'client', text: 'Thank you, I appreciate it.', time: '3:01 PM' },
-  ],
-  'mohd-hakim': [
-    { id: 'c1', from: 'client', text: 'Can we move the meeting to Friday?', time: 'Yesterday' },
-    { id: 'l1', from: 'lawyer', text: 'Yes, Friday works. I will send a new invite.', time: 'Yesterday' },
-  ],
-  'serene-ong': [
-    { id: 'c1', from: 'client', text: 'I just uploaded the updated contract.', time: 'Mon' },
-    { id: 'l1', from: 'lawyer', text: 'Received. I will draft revisions today.', time: 'Mon' },
-  ],
+const sanitizeId = (val) => (val ? String(val).replace(/"/g, '') : '');
+
+const formatTime = (val) => {
+  if (!val) return '';
+  const d = new Date(val);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
 
 const LawyerConversations = () => {
+  const [conversations, setConversations] = useState([]);
   const [activeId, setActiveId] = useState(null);
-  const activeClient = useMemo(
-    () => clients.find((client) => client.id === activeId) || null,
-    [activeId]
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [currentUserId, setCurrentUserId] = useState(
+    sanitizeId(
+      localStorage.getItem('user_id') ||
+        sessionStorage.getItem('user_id') ||
+        localStorage.getItem('id') ||
+        sessionStorage.getItem('id') ||
+        ''
+    )
   );
-  const thread = activeId ? threads[activeId] || [] : [];
+
+  const token =
+    localStorage.getItem('token') ||
+    sessionStorage.getItem('token') ||
+    '';
+
+  const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+
+  const buildImageUrl = (img) => {
+    if (!img) return null;
+    const val = String(img);
+    if (val.startsWith('http')) return val;
+    const root = API_BASE.replace(/\/api\/v1.*$/, '');
+    return `${root}${val.startsWith('/') ? '' : '/'}${val}`;
+  };
+
+  const fetchUserProfile = async (userId) => {
+    try {
+      const res = await fetch(`${API_BASE}/auth/user/${userId}`, { headers: authHeaders });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      const user = data.user || data;
+      const expertise = Array.isArray(user.expertise) ? user.expertise : [];
+      return {
+        name: user.full_name || user.name || 'User',
+        title: expertise[0] || '',
+        image: buildImageUrl(user.profile_image || user.avatar || user.image),
+      };
+    } catch {
+      return {
+        name: 'Conversation',
+        title: '',
+        image: null,
+      };
+    }
+  };
+
+  useEffect(() => {
+    let isMounted = true;
+    const load = async () => {
+      setLoading(true);
+      setError('');
+      try {
+        let uid = currentUserId;
+        if (!uid && token) {
+          const resMe = await fetch(`${API_BASE}/auth/user/me`, { headers: authHeaders });
+          if (resMe.ok) {
+            const data = await resMe.json();
+            uid = sanitizeId(data?.user?.id);
+            if (uid && isMounted) setCurrentUserId(uid);
+          }
+        }
+        const res = await fetch(`${API_BASE}/chat/conversations`, { headers: authHeaders });
+        if (!res.ok) throw new Error('Failed to load conversations');
+        const convs = await res.json();
+        const hydrated = await Promise.all(
+          (convs || []).map(async (conv) => {
+            const participants = (conv.participants || []).map(sanitizeId).filter(Boolean);
+            let otherId = participants.find((p) => p && p !== uid);
+            if (!otherId && participants.length > 1) otherId = participants[1];
+            if (!otherId && participants.length > 0) otherId = participants[0];
+            const profile = await fetchUserProfile(otherId);
+            return {
+              id: sanitizeId(otherId),
+              name: profile.name,
+              title: profile.title,
+              lastMessage: conv.last_message || '',
+              time: formatTime(conv.last_message_at),
+              avatar: profile.image,
+            };
+          })
+        );
+        if (isMounted) {
+          setConversations(hydrated);
+          if (!activeId && hydrated.length > 0) {
+            setActiveId(hydrated[0].id);
+          }
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError(err.message || 'Failed to load conversations');
+          setConversations([]);
+        }
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+    load();
+    return () => {
+      isMounted = false;
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const directory = useMemo(() => {
+    return conversations.reduce((acc, item) => {
+      acc[item.id] = {
+        name: item.name,
+        status: 'Active now',
+        image: item.avatar,
+      };
+      return acc;
+    }, {});
+  }, [conversations]);
 
   return (
     <LawyerLayout activeKey="conversations" bodyClassName="conversations-page">
-      <div className="conversations-shell">
+      <main className="conversations-shell">
         <aside className="conversation-list">
           <div className="list-head">
             <h2>Conversations</h2>
-            <span className="list-pill">{clients.length} clients</span>
+            <span className="list-pill">
+              {loading ? '...' : `${conversations.length || 0} clients`}
+            </span>
           </div>
           <div className="list-scroll" role="list">
-            {clients.map((client) => (
+            {error && <div className="empty-row">{error}</div>}
+            {!error && conversations.length === 0 && !loading && (
+              <div className="empty-row">No conversations yet.</div>
+            )}
+            {conversations.map((contact) => (
               <button
-                key={client.id}
+                key={contact.id}
                 type="button"
-                className={`conversation-row ${activeId === client.id ? 'is-active' : ''}`}
-                onClick={() => setActiveId(client.id)}
+                className={`conversation-row ${activeId === contact.id ? 'is-active' : ''}`}
+                onClick={() => setActiveId(contact.id)}
               >
-                <span className="avatar">{client.name.slice(0, 2)}</span>
+                <span className="avatar">
+                  {contact.avatar ? (
+                    <img src={contact.avatar} alt={contact.name} />
+                  ) : (
+                    contact.name.slice(0, 2)
+                  )}
+                </span>
                 <div className="row-body">
                   <div className="row-top">
-                    <span className="name">{client.name}</span>
-                    <span className="time">{client.time}</span>
+                    <span className="name">{contact.name}</span>
+                    <span className="time">{contact.time}</span>
                   </div>
                   <div className="row-bottom">
-                    <span className="title">{client.title}</span>
-                    <span className="last">{client.lastMessage}</span>
+                    <span className="title">{contact.title}</span>
+                    <span className="last">{contact.lastMessage}</span>
                   </div>
                 </div>
-                {client.online && <span className="status-dot" aria-label="Active" />}
               </button>
             ))}
           </div>
         </aside>
 
         <section className="conversation-pane">
-          {activeClient ? (
-            <div className="chat-shell chat-shell-embedded">
-              <header className="chat-header">
-                <div className="chat-meta">
-                  <span className="chat-avatar">{activeClient.name.slice(0, 2)}</span>
-                  <div>
-                    <div className="chat-name">{activeClient.name}</div>
-                    <div className="chat-status">
-                      <span className={`status-dot ${activeClient.online ? 'online' : ''}`} aria-hidden="true" />
-                      <span>{activeClient.online ? 'Active now' : 'Away'}</span>
-                    </div>
-                  </div>
-                </div>
-              </header>
-
-              <section className="chat-thread" aria-live="polite">
-                {thread.length === 0 ? (
-                  <div className="thread-empty">No messages yet.</div>
-                ) : (
-                  thread.map((msg) => (
-                    <div
-                      key={msg.id}
-                      className={`bubble ${msg.from === 'lawyer' ? 'bubble-lawyer' : 'bubble-client'}`}
-                    >
-                      <p>{msg.text}</p>
-                      <span className="bubble-time">{msg.time}</span>
-                    </div>
-                  ))
-                )}
-              </section>
-
-              <footer className="chat-composer">
-                <div className="composer-shell">
-                  <textarea rows="1" placeholder="Write a message..." />
-                  <button type="button" className="send-btn">
-                    Send
-                  </button>
-                </div>
-              </footer>
-            </div>
+          {activeId ? (
+            <ChatView activeId={activeId} embedded directory={directory} />
           ) : (
             <section className="empty-state">
               <div className="empty-icon" aria-hidden="true">
-                <span>Chat</span>
+                <span>💬</span>
               </div>
               <div className="empty-copy">
-                <h1>Client messages</h1>
-                <p>Select a client to view the conversation</p>
+                <h1>Your messages</h1>
+                <p>Select a client to start chatting</p>
               </div>
-              <button
-                type="button"
-                className="primary-btn"
-                onClick={() => setActiveId(clients[0]?.id || null)}
-              >
-                Open latest
-              </button>
             </section>
           )}
         </section>
-      </div>
+      </main>
     </LawyerLayout>
   );
 };

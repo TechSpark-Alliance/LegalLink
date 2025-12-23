@@ -26,9 +26,9 @@ const tabs = [
 const lawyerCards = [
   {
     id: 'krystal-jung',
-    label: 'Top Real Estate Lawyer',
+    label: '',
     name: 'Krystal Jung',
-    location: 'Kuala Lumpur, Malaysia',
+    location: '[CITY], [STATE]',
     description: 'A generalist to handle most cases.',
     image: lawyerPortrait,
   },
@@ -46,15 +46,28 @@ const normalizeLawyerCard = (lawyer) => {
   const id = lawyer._id || lawyer.id || lawyer.user_id;
   if (!id) return null;
   const name = lawyer.full_name || lawyer.fullName || lawyer.name || 'Lawyer';
-  const locationParts = [lawyer.city, lawyer.state].filter(Boolean);
-  const location = locationParts.length ? locationParts.join(', ') : lawyer.location || 'Location unavailable';
+  const city = lawyer.city || lawyer.City || '';
+  const state = lawyer.state || lawyer.State || '';
+  const locationParts = [city, state].filter(Boolean);
+  const location = locationParts.length ? locationParts.join(', ') : '[CITY], [STATE]';
+  const makeImageUrl = (img) => {
+    if (!img) return null;
+    if (String(img).startsWith('http')) return img;
+    const root = API_BASE.replace(/\/api\/v1.*$/, '');
+    return `${root}${img.startsWith('/') ? '' : '/'}${img}`;
+  };
+  const image = makeImageUrl(lawyer.profile_image || lawyer.avatar) || lawyerPortrait;
+  const expertise = Array.isArray(lawyer.expertise)
+    ? lawyer.expertise.filter(Boolean).slice(0, 3)
+    : [];
   return {
     id,
-    label: lawyer.title || lawyer.specialty || 'Registered Lawyer',
+    label: lawyer.title || lawyer.specialty || '',
     name,
     location,
     description: lawyer.about || lawyer.bio || 'A generalist to handle most cases.',
-    image: lawyer.profile_image || lawyer.avatar || lawyerPortrait,
+    image,
+    expertise,
   };
 };
 
@@ -94,7 +107,7 @@ const Lawyers = () => {
     const fetchLawyers = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`${API_BASE}/auth/lawyers`);
+        const res = await fetch(`${API_BASE}/lawyers`);
         if (!res.ok) {
           throw new Error('Failed to load lawyers');
         }
@@ -194,7 +207,7 @@ const Lawyers = () => {
                   aria-label={`View ${card.name} profile`}
                 >
                   <article className="lawyer-card">
-                    <div className="card-label">{card.label}</div>
+                    {card.label ? <div className="card-label">{card.label}</div> : null}
                     <div className="portrait">
                       <img src={card.image} alt={`${card.name} portrait`} />
                     </div>
@@ -204,6 +217,15 @@ const Lawyers = () => {
                         <Icon type="pin" />
                         <span>{card.location}</span>
                       </div>
+                      {card.expertise && card.expertise.length > 0 && (
+                        <div className="expertise-tags" aria-label="Expertise">
+                          {card.expertise.map((tag) => (
+                            <span className="chip" key={tag}>
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </article>
                 </Link>

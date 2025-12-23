@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation as useRouterLocation, useNavigate, useParams } from 'react-router-dom';
 import NavBar from '../../components/NavBar/NavBar';
 import './AppointmentBooking.css';
 
-const PRESELECTED_DATE = new Date(2025, 11, 16); // 16/12/2025
+const API_BASE = import.meta.env.VITE_APP_API || 'http://localhost:8000/api/v1';
+
 const appointmentTypes = [
   'Initial consultation',
   'Follow-up',
@@ -16,68 +17,66 @@ const durationOptions = [
   { label: '60 min', value: 60 },
   { label: '90 min', value: 90 },
 ];
-const locationOptions = {
-  'In-person': ['Jung & Co. - Jalan Ampang (Main)', 'Jung & Co. - Bangsar (Branch)'],
-  'Video call': ['Zoom', 'Google Meet', 'Microsoft Teams', 'Auto-generate link'],
-};
-const practiceAreas = [
-  'Family & Personal Matters',
-  'Business & Corporate',
-  'Property & Real Estate',
-  'Intellectual Property',
-  'Employment / Labour',
-  'Criminal Defence',
-];
 const languageOptions = ['English', 'Bahasa Melayu', 'Mandarin'];
 
-const bookedSlots = ['10:00', '13:00', '14:30'];
-const latestStartByDuration = {
-  30: 16.5,
-  60: 16,
-  90: 15.5,
-};
-const mockLawyer = {
-  name: 'Krystal Jung',
-  email: 'krystal.jung@jungandco.my',
-  phone: '+60 3-1234 5678',
-};
-const monthNames = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-];
-
 const formatTime = (slot) => {
+  if (!slot) return '';
   const [hours, minutes] = slot.split(':').map(Number);
   const labelHours = hours % 12 || 12;
   const period = hours >= 12 ? 'PM' : 'AM';
   return `${labelHours}:${minutes.toString().padStart(2, '0')} ${period}`;
 };
 
+const minutesFromTime = (timeStr) => {
+  const [h, m] = String(timeStr || '00:00').split(':').map(Number);
+  return (h || 0) * 60 + (m || 0);
+};
+
+const timeFromMinutes = (mins) => {
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+};
+
 const getStoredUser = () => {
   if (typeof window === 'undefined') return null;
   try {
     const raw = localStorage.getItem('ll_user');
-    if (!raw) return null;
-    return JSON.parse(raw);
+    if (raw) return JSON.parse(raw);
+    // Fallback to session data we stash on login
+    const name = localStorage.getItem('full_name') || sessionStorage.getItem('full_name');
+    const email = localStorage.getItem('email') || sessionStorage.getItem('email');
+    const phone = localStorage.getItem('phone') || sessionStorage.getItem('phone');
+    if (name || email || phone) {
+      return { full_name: name, email, phone };
+    }
+    return null;
   } catch {
     return null;
   }
 };
 
+const getAuthToken = () =>
+  (typeof window !== 'undefined' && (localStorage.getItem('token') || sessionStorage.getItem('token') || '')) ||
+  '';
+
 const splitLocation = (location) => {
   if (!location) return { name: 'Not provided', address: '' };
   const [name, ...rest] = location.split(' - ');
   return { name: name || location, address: rest.join(' - ') || '' };
+};
+
+const toDateFromIso = (iso) => {
+  if (!iso) return new Date();
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Date(y, (m || 1) - 1, d || 1);
+};
+
+const toIsoLocal = (dateObj) => {
+  const y = dateObj.getFullYear();
+  const m = (dateObj.getMonth() + 1).toString().padStart(2, '0');
+  const d = dateObj.getDate().toString().padStart(2, '0');
+  return `${y}-${m}-${d}`;
 };
 
 const makeReference = () => {
@@ -89,41 +88,37 @@ const makeReference = () => {
   return `LL-${ref}`;
 };
 
-const buildSlots = () => {
-  const startMinutes = 9 * 60;
-  const endMinutes = 17 * 60;
-  const slots = [];
-  for (let m = startMinutes; m < endMinutes; m += 30) {
-    const hours = Math.floor(m / 60);
-    const minutes = m % 60;
-    slots.push(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`);
-  }
-  return slots;
-};
-
-const timeSlots = buildSlots();
-
 const AppointmentBooking = () => {
   const { id } = useParams();
+  const routerLocation = useRouterLocation();
   const navigate = useNavigate();
-  const [visibleMonth, setVisibleMonth] = useState(PRESELECTED_DATE.getMonth());
+  const lawyerId =
+    id ||
+    routerLocation.state?.lawyerId ||
+    new URLSearchParams(routerLocation.search || '').get('lawyerId') ||
+    '';
+  const [lawyerProfile, setLawyerProfile] = useState(null);
+  const [availability, setAvailability] = useState([]);
+  const [bookedSlots, setBookedSlots] = useState([]);
+  const [loadingAvail, setLoadingAvail] = useState(false);
+  const [visibleMonth, setVisibleMonth] = useState(() => new Date().getMonth());
+  const [visibleYear, setVisibleYear] = useState(() => new Date().getFullYear());
   const [appointmentType, setAppointmentType] = useState(appointmentTypes[0]);
   const [mode, setMode] = useState(modeOptions[0]);
   const [duration, setDuration] = useState(durationOptions[1].value);
-  const [location, setLocation] = useState(locationOptions[modeOptions[0]][0]);
-  const [practiceArea, setPracticeArea] = useState(practiceAreas[0]);
+  const [meetingLocation, setMeetingLocation] = useState('');
   const [issueSummary, setIssueSummary] = useState('');
   const [conflictNames, setConflictNames] = useState('');
   const [ackFee, setAckFee] = useState(false);
   const [ackPrivacy, setAckPrivacy] = useState(false);
   const [language, setLanguage] = useState('');
   const [notes, setNotes] = useState('');
-  const [uploads, setUploads] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(PRESELECTED_DATE);
+  const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [selectedSlot, setSelectedSlot] = useState('');
   const [receipt, setReceipt] = useState(null);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
-  const bookingPath = id ? `/client/lawyers/lawyer/${id}/book-appointment` : '/client/lawyers/book-appointment';
+  const [submitting, setSubmitting] = useState(false);
+  const bookingPath = lawyerId ? `/client/lawyers/lawyer/${lawyerId}/book-appointment` : '/client/lawyers/book-appointment';
   const clientInfo = useMemo(() => {
     const stored = getStoredUser();
     return {
@@ -134,41 +129,207 @@ const AppointmentBooking = () => {
   }, []);
 
   useEffect(() => {
-    setLocation(locationOptions[mode][0]);
+    if (!lawyerId) return;
+    const loadLawyer = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/lawyers/${lawyerId}`);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.detail || 'Failed to load lawyer');
+        const profile = data.lawyer || data.user || data.profile || data;
+        setLawyerProfile(profile);
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error(err);
+      }
+    };
+    loadLawyer();
+
+    const loadAvailability = async () => {
+      setLoadingAvail(true);
+      try {
+        const res = await fetch(`${API_BASE}/lawyers/${lawyerId}/availability`);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.detail || 'Failed to load availability');
+        const slots = Array.isArray(data) ? data : data?.availability || [];
+        setAvailability(slots);
+        const firstDate = slots[0]?.date;
+        if (firstDate) {
+          const d = toDateFromIso(firstDate);
+          setSelectedDate(d);
+          setVisibleMonth(d.getMonth());
+          setVisibleYear(d.getFullYear());
+          const firstSlot = slots.find((s) => s.date === firstDate);
+          if (firstSlot?.start) {
+            setSelectedSlot(firstSlot.start);
+          }
+        }
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error(err);
+      } finally {
+        setLoadingAvail(false);
+      }
+    };
+    loadAvailability();
+  }, [lawyerId]);
+
+  const physicalMeetingOptions = useMemo(() => {
+    const opts = [];
+    const firm = lawyerProfile?.law_firm;
+    const city = lawyerProfile?.city ? `, ${lawyerProfile.city}` : '';
+    const state = lawyerProfile?.state ? `, ${lawyerProfile.state}` : '';
+    if (firm) {
+      opts.push(`${firm}${city}${state}`);
+    }
+    // Always provide a generic in-person option even if no address is on file.
+    opts.push('In-person at lawyer office');
+    return Array.from(new Set(opts));
+  }, [lawyerProfile]);
+
+  const virtualMeetingOptions = useMemo(
+    () => ['Video call (online)', 'Zoom / Meet link from lawyer'],
+    []
+  );
+
+  const meetingOptions = useMemo(
+    () => (mode === 'In-person' ? physicalMeetingOptions : virtualMeetingOptions),
+    [mode, physicalMeetingOptions, virtualMeetingOptions]
+  );
+
+  const isoSelected = toIsoLocal(selectedDate);
+
+  const futureAvailability = useMemo(() => {
+    const todayIso = toIsoLocal(new Date());
+    return availability.filter((slot) => (slot?.date || '') >= todayIso);
+  }, [availability]);
+
+  const slotsForSelectedDay = useMemo(
+    () => futureAvailability.filter((slot) => slot.date === isoSelected),
+    [futureAvailability, isoSelected]
+  );
+
+  useEffect(() => {
+    if (meetingOptions.length) {
+      setMeetingLocation(meetingOptions[0]);
+    }
+  }, [meetingOptions]);
+
+  useEffect(() => {
+    // Reset selected slot when mode changes.
     setSelectedSlot('');
   }, [mode]);
 
   useEffect(() => {
     // Keep visible month in sync with the selected date (useful when cancel/back changes selection).
     setVisibleMonth(selectedDate.getMonth());
+    setVisibleYear(selectedDate.getFullYear());
   }, [selectedDate]);
 
-  const handleUpload = (event) => {
-    const files = Array.from(event.target.files || []);
-    setUploads(files.map((file) => file.name));
+  const allowedDates = useMemo(
+    () => new Set(futureAvailability.map((slot) => String(slot.date))),
+    [futureAvailability]
+  );
+  const monthLabel = useMemo(
+    () =>
+      new Date(visibleYear, visibleMonth, 1).toLocaleDateString('en', { month: 'long', year: 'numeric' }),
+    [visibleMonth, visibleYear]
+  );
+
+  const goPrevMonth = () => {
+    setVisibleMonth((m) => {
+      if (m === 0) {
+        setVisibleYear((y) => y - 1);
+        return 11;
+      }
+      return m - 1;
+    });
   };
 
-  const dayButtons = useMemo(() => {
-    const daysInMonth = new Date(2025, visibleMonth + 1, 0).getDate();
-    return Array.from({ length: daysInMonth }, (_, index) => index + 1);
-  }, [visibleMonth]);
+  const goNextMonth = () => {
+    setVisibleMonth((m) => {
+      if (m === 11) {
+        setVisibleYear((y) => y + 1);
+        return 0;
+      }
+      return m + 1;
+    });
+  };
 
-  const filteredSlots = useMemo(
-    () =>
-      timeSlots.map((slot) => {
-        const [hours, minutes] = slot.split(':').map(Number);
-        const slotValue = hours + minutes / 60;
-        const exceedsWindow = slotValue > latestStartByDuration[duration];
-        const isBooked = bookedSlots.includes(slot);
-        return {
-          value: slot,
-          label: formatTime(slot),
-          disabled: exceedsWindow || isBooked,
-          reason: exceedsWindow ? 'Not enough time' : isBooked ? 'Booked' : '',
-        };
-      }),
-    [duration]
-  );
+  useEffect(() => {
+    if (slotsForSelectedDay.length === 0) {
+      setSelectedSlot('');
+      return;
+    }
+  }, [slotsForSelectedDay]);
+
+  useEffect(() => {
+    if (!lawyerId || !isoSelected) return;
+    const loadBooked = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/lawyers/${lawyerId}/appointments/public?status=accepted&date=${isoSelected}`);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.detail || 'Failed to load booked slots');
+        const appts = Array.isArray(data) ? data : data?.appointments || [];
+        setBookedSlots(appts);
+      } catch {
+        setBookedSlots([]);
+      }
+    };
+    loadBooked();
+  }, [lawyerId, isoSelected]);
+
+  const dayButtons = useMemo(() => {
+    const daysInMonth = new Date(visibleYear, visibleMonth + 1, 0).getDate();
+    return Array.from({ length: daysInMonth }, (_, index) => index + 1);
+  }, [visibleMonth, visibleYear]);
+
+  const availableSegments = useMemo(() => {
+    const bookedSet = new Set(
+      bookedSlots
+        .filter((b) => !b.date || b.date === isoSelected)
+        .map((b) => b.time || b.start || '')
+        .filter(Boolean)
+    );
+    const segments = [];
+    slotsForSelectedDay.forEach((slot) => {
+      const startMin = minutesFromTime(slot.start || '09:00');
+      const endMin = minutesFromTime(slot.end || '17:00');
+      for (let m = startMin; m + duration <= endMin; m += duration) {
+        const s = timeFromMinutes(m);
+        const e = timeFromMinutes(m + duration);
+        if (bookedSet.has(s)) continue;
+        segments.push({
+          value: `${s}-${e}`,
+          label: `${formatTime(s)} - ${formatTime(e)}`,
+          disabled: false,
+          reason: '',
+        });
+      }
+    });
+    return segments;
+  }, [slotsForSelectedDay, duration, bookedSlots, isoSelected]);
+
+  useEffect(() => {
+    if (availableSegments.length && !availableSegments.some((seg) => seg.value === selectedSlot)) {
+      setSelectedSlot(availableSegments[0].value);
+    }
+    if (!availableSegments.length) {
+      setSelectedSlot('');
+    }
+  }, [availableSegments, selectedSlot]);
+
+  const filteredSlots = availableSegments;
+
+  const selectedSlotLabel = useMemo(() => {
+    if (selectedSlot) return selectedSlot.replace('-', ' - ');
+    return 'Select a time';
+  }, [selectedSlot]);
+
+  const readableSlot = useMemo(() => {
+    if (!selectedSlot) return 'Select a time';
+    const [s, e] = selectedSlot.split('-');
+    return `${formatTime(s)} - ${formatTime(e)}`;
+  }, [selectedSlot]);
 
   const selectedDateLabel = `${selectedDate.getDate().toString().padStart(2, '0')}/${(selectedDate.getMonth() + 1)
     .toString()
@@ -188,29 +349,42 @@ const AppointmentBooking = () => {
   );
 
   const buildAppointmentPayload = () => {
+    const lawyerName = lawyerProfile?.full_name || lawyerProfile?.name || 'Not provided';
+    const lawyerEmail = lawyerProfile?.email || 'Not provided';
+    const lawyerPhone = lawyerProfile?.phone || 'Not provided';
     const startDateTime = new Date(selectedDate);
+    const endDateTime = new Date(selectedDate);
     if (selectedSlot) {
-      const [h, m] = selectedSlot.split(':').map(Number);
-      startDateTime.setHours(h, m, 0, 0);
+      const [rawStart, rawEnd] = selectedSlot.split('-');
+      const [sh, sm] = rawStart.split(':').map(Number);
+      const [eh, em] = rawEnd ? rawEnd.split(':').map(Number) : [sh, sm];
+      startDateTime.setHours(sh, sm || 0, 0, 0);
+      endDateTime.setHours(eh || sh, em || sm || 0, 0, 0);
     }
+    const locationParts = splitLocation(meetingLocation);
     return {
       status: 'Pending approval',
       referenceId: makeReference(),
       start: startDateTime.toISOString(),
+      end: selectedSlot ? endDateTime.toISOString() : null,
       durationMinutes: duration,
       mode,
       appointmentType,
-      location: splitLocation(location),
-      meetingLink: mode === 'Video call' ? location : null,
-      lawyer: { ...mockLawyer },
+      location: locationParts,
+      meetingLink: mode === 'Video call' ? meetingLocation : null,
+      lawyer: {
+        ...((lawyerProfile || {}) ?? {}),
+        name: lawyerName,
+        full_name: lawyerName,
+        email: lawyerEmail,
+        phone: lawyerPhone,
+      },
       client: { ...clientInfo },
       caseDetails: {
-        practiceArea,
         preferredLanguage: language || 'No preference',
         conflictCheckNames: conflictNames || null,
         issueSummary: issueSummary || null,
         specialRequests: notes || null,
-        uploads: uploads.length ? uploads.join(', ') : 'None',
       },
     };
   };
@@ -228,29 +402,65 @@ const AppointmentBooking = () => {
       clientName: clientInfo.name,
       clientEmail: clientInfo.email,
       clientPhone: clientInfo.phone,
-      lawyerName: mockLawyer.name,
-      lawyerEmail: mockLawyer.email,
-      lawyerPhone: mockLawyer.phone,
+      lawyerName: lawyerProfile?.full_name || lawyerProfile?.name || 'Not provided',
+      lawyerEmail: lawyerProfile?.email || 'Not provided',
+      lawyerPhone: lawyerProfile?.phone || 'Not provided',
       appointmentType,
       mode,
       duration: durationOptions.find((opt) => opt.value === duration)?.label || `${duration} min`,
-      location,
-      practiceArea,
+      location: meetingLocation,
       issueSummary,
       conflictNames,
       language: language || 'No preference',
       notes: notes || '-',
-      uploads,
       date: heroDateLabel,
-      time: selectedSlot ? formatTime(selectedSlot) : 'Not provided',
+      time: readableSlot,
     });
     setShowReceiptModal(true);
   };
 
-  const handleFinalize = () => {
-    saveLatestAppointment();
-    setShowReceiptModal(false);
-    navigate('/client/appointment');
+  const handleFinalize = async () => {
+    if (!selectedSlot || !lawyerId) return;
+    const token = getAuthToken();
+    const payload = buildAppointmentPayload();
+    const [slotStart] = selectedSlot.split('-');
+    const body = {
+      lawyer_id: lawyerId,
+      date: isoSelected,
+      time: slotStart,
+      duration_minutes: duration,
+      mode,
+      appointment_type: appointmentType,
+      location_name: payload.location?.name || '',
+      location_address: payload.location?.address || '',
+      meeting_link: payload.meetingLink,
+      notes: notes || null,
+      client_name: clientInfo.name,
+      client_email: clientInfo.email,
+      client_phone: clientInfo.phone,
+    };
+    setSubmitting(true);
+    try {
+      const res = await fetch(`${API_BASE}/lawyers/appointments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || 'Failed to create appointment');
+      // Persist latest booking locally for the client view page.
+      localStorage.setItem('ll_latest_appointment', JSON.stringify(data));
+      setShowReceiptModal(false);
+      navigate('/client/appointment');
+    } catch (err) {
+      // eslint-disable-next-line no-alert
+      alert(err.message || 'Failed to create appointment');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const receiptFields = receipt
@@ -272,15 +482,10 @@ const AppointmentBooking = () => {
           lawyerPhone: receipt.lawyerPhone,
         },
         caseDetails: [
-          { label: 'Practice area', value: receipt.practiceArea },
           { label: 'Preferred language', value: receipt.language || 'Not provided' },
           { label: 'Conflict-check names', value: receipt.conflictNames || 'Not provided' },
           { label: 'Issue summary', value: receipt.issueSummary || 'Not provided' },
           { label: 'Special requests/notes', value: receipt.notes || 'Not provided' },
-          {
-            label: 'Uploads',
-            value: receipt.uploads && receipt.uploads.length > 0 ? receipt.uploads.join(', ') : 'None',
-          },
         ],
       }
     : null;
@@ -295,7 +500,7 @@ const AppointmentBooking = () => {
             <h1>Book Appointment</h1>
             <p className="muted">Fill in the details below to schedule your consultation.</p>
           </div>
-          <div className="date-pill">Preselected: 16/12/2025</div>
+          <div className="date-pill">Selected: {selectedDateLabel}</div>
         </header>
 
         <section className="booking-grid">
@@ -351,32 +556,16 @@ const AppointmentBooking = () => {
             </div>
 
             <div className="field">
-              <label htmlFor="location">Meeting location / link preference</label>
+              <label htmlFor="meetingLocation">Meeting location / link preference</label>
               <select
-                id="location"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
+                id="meetingLocation"
+                value={meetingLocation}
+                onChange={(e) => setMeetingLocation(e.target.value)}
                 required
               >
-                {locationOptions[mode].map((loc) => (
-                  <option key={loc} value={loc}>
-                    {loc}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="field">
-              <label htmlFor="practiceArea">Case category / practice area</label>
-              <select
-                id="practiceArea"
-                value={practiceArea}
-                onChange={(e) => setPracticeArea(e.target.value)}
-                required
-              >
-                {practiceAreas.map((area) => (
-                  <option key={area} value={area}>
-                    {area}
+                {meetingOptions.map((locVal) => (
+                  <option key={locVal} value={locVal}>
+                    {locVal}
                   </option>
                 ))}
               </select>
@@ -416,33 +605,6 @@ const AppointmentBooking = () => {
                 <span className="muted">Share extra context if you like.</span>
               </div>
               <div className="optional-grid">
-                <div className="field">
-                  <span className="label">Document upload</span>
-                  <label className="dropzone" htmlFor="documents">
-                    <input
-                      id="documents"
-                      type="file"
-                      accept=".pdf,.jpg,.jpeg,.png"
-                      multiple
-                      onChange={handleUpload}
-                    />
-                    <div className="dropzone-inner">
-                      <span className="upload-icon">⬆</span>
-                      <div>
-                        <div className="strong">Upload documents (optional)</div>
-                        <div className="muted">PDF, JPG, PNG — multiple files allowed</div>
-                      </div>
-                    </div>
-                  </label>
-                  {uploads.length > 0 && (
-                    <ul className="upload-list">
-                      {uploads.map((file) => (
-                        <li key={file}>{file}</li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-
                 <div className="field">
                   <label htmlFor="language">Preferred communication language</label>
                   <select
@@ -507,17 +669,17 @@ const AppointmentBooking = () => {
                   <h2>Select a date & time</h2>
                 </div>
               </div>
-              <div className="calendar" aria-label="Mock calendar for 2025">
+              <div className="calendar" aria-label="Available dates">
                 <div className="calendar-head">
                   <div className="month-label">
-                    {monthNames[visibleMonth]} 2025
+                    {monthLabel}
                   </div>
                   <div className="calendar-nav">
                     <button
                       type="button"
                       className="nav-btn"
-                      onClick={() => setVisibleMonth((m) => Math.max(0, m - 1))}
-                      disabled={visibleMonth === 0}
+                      onClick={goPrevMonth}
+                      
                       aria-label="Previous month"
                     >
                       ‹
@@ -525,8 +687,8 @@ const AppointmentBooking = () => {
                     <button
                       type="button"
                       className="nav-btn"
-                      onClick={() => setVisibleMonth((m) => Math.min(11, m + 1))}
-                      disabled={visibleMonth === 11}
+                      onClick={goNextMonth}
+                      
                       aria-label="Next month"
                     >
                       ›
@@ -535,16 +697,24 @@ const AppointmentBooking = () => {
                 </div>
                 <div className="calendar-grid">
                   {dayButtons.map((day) => {
+                    const dateObj = new Date(visibleYear, visibleMonth, day);
+                    const iso = toIsoLocal(dateObj);
+                    const isAllowed = allowedDates.has(iso);
                     const isSelected =
+                      isAllowed &&
                       day === selectedDate.getDate() &&
                       selectedDate.getMonth() === visibleMonth &&
-                      selectedDate.getFullYear() === 2025;
+                      selectedDate.getFullYear() === visibleYear;
                     return (
                       <button
                         type="button"
                         key={day}
-                        className={`day ${isSelected ? 'day-selected' : ''}`}
-                        onClick={() => setSelectedDate(new Date(2025, visibleMonth, day))}
+                        className={`day ${isSelected ? 'day-selected' : ''} ${!isAllowed ? 'day-disabled' : ''}`}
+                        disabled={!isAllowed}
+                        onClick={() => {
+                          if (!isAllowed) return;
+                          setSelectedDate(dateObj);
+                        }}
                         aria-pressed={isSelected}
                       >
                         {day}
@@ -557,24 +727,28 @@ const AppointmentBooking = () => {
               <div className="times">
                 <div className="times-head">
                   <p className="strong">Time slots</p>
-                  <p className="muted">9:00 AM — 5:00 PM</p>
+                  <p className="muted">Choose from available slots</p>
                 </div>
                 <div className="slots">
-                  {filteredSlots.map((slot) => (
-                    <button
-                      type="button"
-                      key={slot.value}
-                      className={`slot ${selectedSlot === slot.value ? 'slot-active' : ''}`}
-                      disabled={slot.disabled}
-                      onClick={() => setSelectedSlot(slot.value)}
-                      title={slot.reason || 'Available'}
-                    >
-                      {slot.label}
-                    </button>
-                  ))}
+                  {filteredSlots.length === 0 ? (
+                    <div className="muted">No slots for this date.</div>
+                  ) : (
+                    filteredSlots.map((slot) => (
+                      <button
+                        type="button"
+                        key={slot.value}
+                        className={`slot ${selectedSlot === slot.value ? 'slot-active' : ''}`}
+                        disabled={slot.disabled}
+                        onClick={() => setSelectedSlot(slot.value)}
+                        title={slot.reason || 'Available'}
+                      >
+                        {slot.label}
+                      </button>
+                    ))
+                  )}
                 </div>
                 <p className="muted note">
-                  Slots auto-adjust to duration. Booked slots are greyed out to show real availability.
+                  Slots reflect the lawyer's published availability.
                 </p>
               </div>
 
@@ -585,7 +759,7 @@ const AppointmentBooking = () => {
                 </div>
                 <div className="summary-row">
                   <span>Time</span>
-                  <strong>{selectedSlot ? formatTime(selectedSlot) : 'Select a time'}</strong>
+                  <strong>{readableSlot}</strong>
                 </div>
                 <div className="summary-row">
                   <span>Mode</span>
@@ -686,9 +860,9 @@ const AppointmentBooking = () => {
                   </div>
 
                   <div className="receipt-actions">
-                    <button type="button" className="btn primary" onClick={handleFinalize}>
-                      Confirm booking
-                    </button>
+                <button type="button" className="btn primary" onClick={handleFinalize}>
+                      {submitting ? 'Submitting...' : 'Confirm booking'}
+                </button>
                     <button type="button" className="btn ghost" onClick={() => setShowReceiptModal(false)}>
                       Edit booking
                     </button>

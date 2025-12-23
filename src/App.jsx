@@ -20,8 +20,10 @@ import CreateCase from './pages/Cases/CreateCase';
 import CaseDetail from './pages/Cases/CaseDetail';
 import ClientsList from './pages/Clients/ClientsList';
 import ClientDetail from './pages/Clients/ClientDetail';
+import LawyerAppointments from './pages/Lawyers/LawyerAppointments';
 import RequireLawyer from './components/RequireLawyer';
 import RequireClient from './components/RequireClient';
+import ClientProfile from './pages/Profile/ClientProfile';
 
 function App() {
   return (
@@ -89,11 +91,27 @@ function App() {
           }
         />
         <Route
+          path="/lawyer/appointments"
+          element={
+            <RequireLawyer>
+              <LawyerAppointments />
+            </RequireLawyer>
+          }
+        />
+        <Route
           path="/lawyer/profile"
           element={
             <RequireLawyer>
               <LawyerProfileDashboard />
             </RequireLawyer>
+          }
+        />
+        <Route
+          path="/client/profile"
+          element={
+            <RequireClient>
+              <ClientProfile />
+            </RequireClient>
           }
         />
         <Route

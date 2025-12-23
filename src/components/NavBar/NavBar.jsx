@@ -3,6 +3,8 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import styles from './NavBar.module.css';
 import logo from '../../assets/legal-link-logo.png';
 
+const API_BASE = import.meta.env.VITE_APP_API || 'http://localhost:8000/api/v1';
+
 const links = [
   { to: '/client/home', label: 'Home' },
   { to: '/client/lawyers', label: 'Lawyers' },
@@ -12,8 +14,31 @@ const links = [
 
 const NavBar = ({ forceActive }) => {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [userName, setUserName] = useState('Profile');
   const menuRef = useRef(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    let name = '';
+    try {
+      const stored = localStorage.getItem('ll_user') || sessionStorage.getItem('ll_user');
+      if (stored && stored !== 'undefined') {
+        const parsed = JSON.parse(stored);
+        name = parsed?.full_name || parsed?.fullName || parsed?.name || parsed?.email || '';
+      }
+    } catch {
+      /* ignore */
+    }
+    if (!name) {
+      name =
+        localStorage.getItem('full_name') ||
+        sessionStorage.getItem('full_name') ||
+        localStorage.getItem('user') ||
+        sessionStorage.getItem('user') ||
+        'Profile';
+    }
+    setUserName(name);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -36,21 +61,31 @@ const NavBar = ({ forceActive }) => {
     };
   }, []);
 
-  const handleMenuAction = (action) => {
+  const handleMenuAction = async (action) => {
     setMenuOpen(false);
 
+    if (action === 'profile') {
+      navigate('/client/profile');
+      return;
+    }
+
     if (action === 'signOut') {
-      navigate('/register', { replace: true });
-      return;
-    }
-
-    if (action === 'account') {
-      console.info('Navigate to account settings');
-      return;
-    }
-
-    if (action === 'privacy') {
-      console.info('Navigate to privacy settings');
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      try {
+        if (token) {
+          await fetch(`${API_BASE}/auth/user/logout`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token }),
+          });
+        }
+      } catch {
+        /* ignore */
+      } finally {
+        localStorage.clear();
+        sessionStorage.clear();
+        navigate('/login', { replace: true });
+      }
     }
   };
 
@@ -88,8 +123,8 @@ const NavBar = ({ forceActive }) => {
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen((open) => !open)}
           >
-            <span className={styles.avatar}>U</span>
-            <span className={styles.profileName}>Your Profile</span>
+            <span className={styles.avatar}>{(userName || 'P').charAt(0)}</span>
+            <span className={styles.profileName}>{userName}</span>
           </button>
           <div
             className={`${styles.menu} ${menuOpen ? styles.menuOpen : ''}`}
@@ -99,18 +134,10 @@ const NavBar = ({ forceActive }) => {
             <button
               type="button"
               className={styles.menuItem}
-              onClick={() => handleMenuAction('account')}
+              onClick={() => handleMenuAction('profile')}
               role="menuitem"
             >
-              Account settings
-            </button>
-            <button
-              type="button"
-              className={styles.menuItem}
-              onClick={() => handleMenuAction('privacy')}
-              role="menuitem"
-            >
-              Privacy settings
+              Profile
             </button>
             <div className={styles.menuDivider} aria-hidden="true" />
             <button
