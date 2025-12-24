@@ -3,6 +3,19 @@ import { useNavigate } from 'react-router-dom';
 import LawyerLayout from '../../components/LawyerLayout';
 import './LawyerProfile.css';
 
+const EyeIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <path
+      d="M1.75 12s3.5-7 10.25-7 10.25 7 10.25 7-3.5 7-10.25 7S1.75 12 1.75 12z"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.7" />
+  </svg>
+);
+
 const expertiseOptions = [
   'Litigation',
   'Corporate',
@@ -63,6 +76,9 @@ export default function LawyerProfilePage() {
   const [expertiseOpen, setExpertiseOpen] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('card');
+  const [passwords, setPasswords] = useState({ current: '', next: '', confirm: '' });
+  const [showPassword, setShowPassword] = useState({ current: false, next: false, confirm: false });
+  const [passwordSaving, setPasswordSaving] = useState(false);
 
   const apiRoot = (() => {
     try {
@@ -214,6 +230,35 @@ export default function LawyerProfilePage() {
       setError(err.message || 'Save failed');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const changePassword = async () => {
+    if (passwords.next !== passwords.confirm) {
+      setError('New passwords do not match');
+      return;
+    }
+    setPasswordSaving(true);
+    setError('');
+    try {
+      const res = await fetch(`${apiBase}/auth/user/me`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ password: passwords.next }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.detail || 'Failed to update password');
+      }
+      setPasswords({ current: '', next: '', confirm: '' });
+      setToast('Password updated.');
+    } catch (err) {
+      setError(err.message || 'Failed to update password');
+    } finally {
+      setPasswordSaving(false);
     }
   };
 
@@ -498,17 +543,100 @@ export default function LawyerProfilePage() {
                 </div>
               </div>
 
+            <div className="profile-section">
+              <h3>About Me</h3>
+              <div className="profile-row span-full">
+                <textarea
+                  className="profile-input profile-textarea"
+                  rows={5}
+                  maxLength={aboutLimit}
+                  value={form.about ?? ''}
+                  onChange={(e) => setForm((prev) => ({ ...prev, about: e.target.value }))}
+                />
+                <div className="form-hint">{aboutCount}/{aboutLimit} characters</div>
+              </div>
+            </div>
+
               <div className="profile-section">
-                <h3>About Me</h3>
-                <div className="profile-row span-full">
-                  <textarea
-                    className="profile-input profile-textarea"
-                    rows={5}
-                    maxLength={aboutLimit}
-                    value={form.about ?? ''}
-                    onChange={(e) => setForm((prev) => ({ ...prev, about: e.target.value }))}
-                  />
-                  <div className="form-hint">{aboutCount}/{aboutLimit} characters</div>
+                <h3>Change password</h3>
+                <div className="profile-grid">
+                  <div className="profile-row span-full">
+                    <span className="profile-label">Current password</span>
+                    <div className="input-eye-wrap">
+                      <input
+                        className="profile-input"
+                        type={showPassword.current ? 'text' : 'password'}
+                        value={passwords.current}
+                        onChange={(e) => setPasswords((p) => ({ ...p, current: e.target.value }))}
+                        placeholder="Enter current password"
+                      />
+                      <button
+                        type="button"
+                        className="eye-btn"
+                        aria-label={showPassword.current ? 'Hide password' : 'Show password'}
+                        onClick={() => setShowPassword((s) => ({ ...s, current: !s.current }))}
+                      >
+                        <EyeIcon />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="profile-row span-full">
+                    <span className="profile-label">New password</span>
+                    <div className="input-eye-wrap">
+                      <input
+                        className="profile-input"
+                        type={showPassword.next ? 'text' : 'password'}
+                        value={passwords.next}
+                        onChange={(e) => setPasswords((p) => ({ ...p, next: e.target.value }))}
+                        placeholder="Enter new password"
+                      />
+                      <button
+                        type="button"
+                        className="eye-btn"
+                        aria-label={showPassword.next ? 'Hide password' : 'Show password'}
+                        onClick={() => setShowPassword((s) => ({ ...s, next: !s.next }))}
+                      >
+                        <EyeIcon />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="profile-row span-full">
+                    <span className="profile-label">Confirm new password</span>
+                    <div className="input-eye-wrap">
+                      <input
+                        className="profile-input"
+                        type={showPassword.confirm ? 'text' : 'password'}
+                        value={passwords.confirm}
+                        onChange={(e) => setPasswords((p) => ({ ...p, confirm: e.target.value }))}
+                        placeholder="Confirm new password"
+                      />
+                      <button
+                        type="button"
+                        className="eye-btn"
+                        aria-label={showPassword.confirm ? 'Hide password' : 'Show password'}
+                        onClick={() => setShowPassword((s) => ({ ...s, confirm: !s.confirm }))}
+                      >
+                        <EyeIcon />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="profile-row span-full">
+                    <div className="actions-row">
+                      <button
+                        type="button"
+                        className="primary-btn"
+                        disabled={
+                          passwordSaving ||
+                          !passwords.current ||
+                          !passwords.next ||
+                          passwords.next !== passwords.confirm
+                        }
+                        onClick={changePassword}
+                      >
+                        {passwordSaving ? 'Updating...' : 'Update password'}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

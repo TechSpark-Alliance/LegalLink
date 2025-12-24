@@ -114,6 +114,7 @@ const ClientRegister = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const progressWidth = currentStep === 1 ? '50%' : '100%';
 
   const handleChange = (e) => {
     setFormData({
@@ -192,8 +193,8 @@ const ClientRegister = () => {
                 <span className="step-label">Finish</span>
               </div>
             </div>
-            <div className="progress-bar">
-              <div className="progress-fill" style={{ width: currentStep === 1 ? '50%' : '100%' }} />
+            <div className="client-progress-bar" aria-hidden="true">
+              <div className="client-progress-fill" style={{ width: progressWidth }} />
             </div>
           </div>
 
@@ -404,7 +405,7 @@ const ClientRegister = () => {
               )}
               <button
                 type={currentStep === 1 ? 'submit' : 'submit'}
-                className="cta-button"
+                className="ctbutton"
                 disabled={currentStep === 2 && !termsAccepted}
               >
                 {currentStep === 1 ? 'Next' : (

@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import LawyerLayout from '../../components/LawyerLayout';
 import './LawyerAppointments.css';
 
@@ -34,6 +34,8 @@ export default function LawyerAppointments() {
     '';
 
   const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+
+  const cleanTime = (value) => (value || '').replace(/[^\d:apm\s]/gi, '').trim();
 
   const fetchAvailability = async () => {
     setLoadingAvail(true);
@@ -324,7 +326,7 @@ export default function LawyerAppointments() {
                 {sortedAvailability.map((slot) => (
                   <div className="slot" key={slot.id}>
                     <div>
-                      <strong>{slot.date}</strong> � {slot.start} to {slot.end}
+                      <strong>{slot.date}</strong> {cleanTime(slot.start) ? "- " + cleanTime(slot.start) : ""} {cleanTime(slot.end) ? "to " + cleanTime(slot.end) : ""}
                     </div>
                     <button className="ghost-btn" onClick={() => removeAvailability(slot.id)}>
                       Remove

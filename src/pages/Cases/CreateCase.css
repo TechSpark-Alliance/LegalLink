@@ -271,16 +271,19 @@
 }
 
 .date-trigger {
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.12);
   background: #1f2c46;
   color: #e7ecf7;
-  padding: 8px 10px;
+  padding: 8px;
   border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  height: 40px;
+  min-width: 40px;
+  transition: background 0.2s ease, border-color 0.2s ease;
 }
 
 .icon-cal {
@@ -288,10 +291,14 @@
   width: 16px;
   height: 16px;
   color: #ffffff;
-  fill: none;
-  stroke: #ffffff;
-  stroke-width: 1.6;
+  fill: currentColor;
+  stroke: none;
   line-height: 1;
+}
+
+.date-trigger:hover {
+  background: #24365a;
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .field-error {
@@ -377,6 +384,24 @@
   color: #e7ecf7;
   font-weight: 700;
   font-size: 12px;
+}
+
+.progress-delete {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  color: #f67676;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 12px;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.progress-delete:hover {
+  border-color: rgba(246, 118, 118, 0.6);
+  color: #ff8f8f;
+  background: rgba(246, 118, 118, 0.1);
 }
 
 .submit-error {

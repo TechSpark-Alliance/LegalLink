@@ -30,6 +30,11 @@ export default function CaseDetail() {
   const [progressStatus, setProgressStatus] = useState('');
   const openDateRef = useRef(null);
   const closeDateRef = useRef(null);
+  const additionalPartyCount = useMemo(() => {
+    const raw = Number(caseData?.additional_parties);
+    if (!Number.isFinite(raw) || raw <= 0) return 0;
+    return Math.min(5, Math.floor(raw));
+  }, [caseData?.additional_parties]);
 
   const apiBase = import.meta.env.VITE_APP_API || 'http://localhost:8000/api/v1';
   const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
@@ -167,6 +172,20 @@ export default function CaseDetail() {
         fetchProgress();
       })
       .catch(() => {});
+  };
+
+  const deleteProgress = async (progressId) => {
+    if (!progressId) return;
+    if (!confirm('Delete this progress entry?')) return;
+    try {
+      await fetch(`${apiBase}/cases/${id}/progress/${progressId}`, {
+        method: 'DELETE',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      fetchProgress();
+    } catch {
+      // no-op; keep UI unchanged on error
+    }
   };
 
   const formattedDate = (value) =>
@@ -312,9 +331,15 @@ export default function CaseDetail() {
                 <button
                   type="button"
                   className="date-trigger"
+                  aria-label="Open date picker"
                   onClick={() => openDateRef.current?.showPicker?.()}
                 >
-                  Cal
+                  <svg className="icon-cal" viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      fill="currentColor"
+                      d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Zm0 15H5V9h14v10Zm0-12H5V6h14v1Z"
+                    />
+                  </svg>
                 </button>
               </div>
             </label>
@@ -330,9 +355,15 @@ export default function CaseDetail() {
                 <button
                   type="button"
                   className="date-trigger"
+                  aria-label="Open date picker"
                   onClick={() => closeDateRef.current?.showPicker?.()}
                 >
-                  Cal
+                  <svg className="icon-cal" viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      fill="currentColor"
+                      d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Zm0 15H5V9h14v10Zm0-12H5V6h14v1Z"
+                    />
+                  </svg>
                 </button>
               </div>
             </label>
@@ -360,19 +391,26 @@ export default function CaseDetail() {
             <label>
               Number of additional parties
               <input
+                type="number"
+                min="0"
+                max="5"
                 value={caseData.additional_parties || ''}
                 onChange={(e) => setCaseData({ ...caseData, additional_parties: e.target.value })}
               />
             </label>
-            {[1, 2, 3, 4, 5].map((n) => (
-              <label key={`ap-${n}`}>
-                Additional party {n} name
-                <input
-                  value={caseData[`additional_party${n}`] || ''}
-                  onChange={(e) => setCaseData({ ...caseData, [`additional_party${n}`]: e.target.value })}
-                />
-              </label>
-            ))}
+            {additionalPartyCount > 0 &&
+              Array.from({ length: additionalPartyCount }, (_, idx) => {
+                const n = idx + 1;
+                return (
+                  <label key={`ap-${n}`}>
+                    Additional party {n} name
+                    <input
+                      value={caseData[`additional_party${n}`] || ''}
+                      onChange={(e) => setCaseData({ ...caseData, [`additional_party${n}`]: e.target.value })}
+                    />
+                  </label>
+                );
+              })}
           </div>
           <div className="form-actions">
             <button className="ghost-btn" onClick={() => navigate('/lawyer/cases')}>
@@ -433,7 +471,15 @@ export default function CaseDetail() {
                   <span className="progress-date">
                     {p.created_at ? new Date(p.created_at).toLocaleString() : ''}
                   </span>
-                  {p.status && <span className="badge">{p.status}</span>}
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    {p.status && <span className="badge">{p.status}</span>}
+                    <button
+                      className="progress-delete"
+                      onClick={() => deleteProgress(p._id || p.id)}
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
                 {p.note && <p className="progress-note">{p.note}</p>}
               </div>
