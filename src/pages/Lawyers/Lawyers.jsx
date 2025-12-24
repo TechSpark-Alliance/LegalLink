@@ -100,7 +100,11 @@ const Icon = ({ type }) => {
 
 const Lawyers = () => {
   const [lawyers, setLawyers] = useState([]);
+  const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [searchLocation, setSearchLocation] = useState('');
+  const [searchPractice, setSearchPractice] = useState('');
+  const [filterApplied, setFilterApplied] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -136,7 +140,30 @@ const Lawyers = () => {
     };
   }, []);
 
-  const displayCards = lawyers.length > 0 ? lawyers : lawyerCards;
+  const applyFilter = () => {
+    const base = lawyers.length > 0 ? lawyers : lawyerCards;
+    const loc = searchLocation.trim().toLowerCase();
+    const area = searchPractice.trim().toLowerCase();
+    setFilterApplied(true);
+    if (!loc && !area) {
+      setFiltered(base);
+      return;
+    }
+    const match = (card) => {
+      const locationMatch = loc
+        ? `${card.location || ''}`.toLowerCase().includes(loc)
+        : true;
+      const areaMatch = area
+        ? `${card.description || ''}`.toLowerCase().includes(area) ||
+          (card.expertise || []).some((tag) => `${tag}`.toLowerCase().includes(area))
+        : true;
+      return locationMatch && areaMatch;
+    };
+    setFiltered(base.filter(match));
+  };
+
+  const baseCards = lawyers.length > 0 ? lawyers : lawyerCards;
+  const displayCards = filterApplied ? filtered : baseCards;
 
   return (
     <div className="lawyers-page">
@@ -157,6 +184,12 @@ const Lawyers = () => {
                   maxLength={30}
                   placeholder={filter.placeholder}
                   aria-label={filter.label}
+                  value={filter.label === 'By location' ? searchLocation : searchPractice}
+                  onChange={(e) =>
+                    filter.label === 'By location'
+                      ? setSearchLocation(e.target.value)
+                      : setSearchPractice(e.target.value)
+                  }
                 />
               </label>
             ) : (
@@ -170,6 +203,7 @@ const Lawyers = () => {
                   color: '#3b300f',
                   boxShadow: 'none',
                 }}
+                onClick={applyFilter}
               >
                 <Icon type={filter.icon} />
                 <span>{filter.label}</span>

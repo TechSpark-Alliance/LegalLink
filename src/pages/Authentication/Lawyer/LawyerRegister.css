@@ -111,6 +111,31 @@
   gap: 1.5rem;
 }
 
+.lawyer-form input[type='text'],
+.lawyer-form input[type='email'],
+.lawyer-form input[type='password'],
+.lawyer-form input[type='tel'],
+.lawyer-form select {
+  width: 100%;
+  padding: 1.1rem 1.2rem;
+  border-radius: 12px;
+  border: 1px solid rgba(247, 249, 255, 0.15);
+  background: #0f182b;
+  color: #f7f9ff;
+  font-size: 1rem;
+}
+
+.lawyer-form input::placeholder {
+  color: rgba(247, 249, 255, 0.6);
+}
+
+.lawyer-form input:focus,
+.lawyer-form select:focus {
+  outline: none;
+  border-color: var(--gold-300, #f4be3e);
+  box-shadow: 0 0 0 2px rgba(248, 217, 108, 0.2);
+}
+
 .section-card {
   background: transparent;
   border: none;
@@ -283,7 +308,7 @@
   border: 1px solid rgba(255, 255, 255, 0.4);
   color: #e7ecf7;
   background: rgba(255, 255, 255, 0.06);
-  padding: 0.7rem 1.4rem;
+  padding: 0.85rem 1.4rem;
   border-radius: 14px;
   font-weight: 700;
   font-size: 1rem;
