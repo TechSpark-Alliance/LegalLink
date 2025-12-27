@@ -75,10 +75,10 @@ export default function LawyerProfilePage() {
   const [uploading, setUploading] = useState({ avatar: false, sijil: false, firm: false });
   const [expertiseOpen, setExpertiseOpen] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState('card');
   const [passwords, setPasswords] = useState({ current: '', next: '', confirm: '' });
   const [showPassword, setShowPassword] = useState({ current: false, next: false, confirm: false });
   const [passwordSaving, setPasswordSaving] = useState(false);
+  const stripePriceId = import.meta.env.VITE_STRIPE_PRICE_ID || '';
 
   const apiRoot = (() => {
     try {
@@ -432,7 +432,9 @@ export default function LawyerProfilePage() {
   const statusBadge = profile?.status?.is_verified ? 'Verified' : profile?.status ? 'Pending' : '';
   const subscription = profile?.subscription || {};
   const subscriptionStatus = subscription.status || 'Trial';
-  const subscriptionDate = subscription.renewal_date || subscription.next_billing_date || 'May 30, 2025';
+  const subscriptionDate = subscription.current_period_end
+    ? new Date(subscription.current_period_end * 1000).toLocaleDateString()
+    : '-';
   const isSubscribed = Boolean(subscription.status);
   const aboutCount = (form.about || '').length;
   const aboutLimit = 500;
@@ -441,6 +443,71 @@ export default function LawyerProfilePage() {
     setFieldErrors({});
     fetchProfile();
     setEditing(true);
+  };
+
+  const startCheckout = async () => {
+    setError('');
+    try {
+      const res = await fetch(`${apiBase}/billing/checkout-session`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          price_id: stripePriceId || undefined,
+          plan: 'monthly',
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.detail || 'Failed to start checkout');
+      }
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to start checkout');
+    }
+  };
+
+  const openPortal = async () => {
+    setError('');
+    try {
+      const res = await fetch(`${apiBase}/billing/portal-session`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.detail || 'Failed to open billing portal');
+      }
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to open billing portal');
+    }
+  };
+
+  const cancelSubscription = async () => {
+    setError('');
+    try {
+      const res = await fetch(`${apiBase}/billing/cancel`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.detail || 'Failed to cancel subscription');
+      }
+      await fetchProfile();
+      setToast('Subscription cancellation scheduled.');
+    } catch (err) {
+      setError(err.message || 'Failed to cancel subscription');
+    }
   };
 
   return (
@@ -665,10 +732,10 @@ export default function LawyerProfilePage() {
                   <div className="subscription-actions">
                     {isSubscribed ? (
                       <>
-                        <button type="button" className="primary-btn">
+                        <button type="button" className="primary-btn" onClick={openPortal}>
                           Manage subscription
                         </button>
-                        <button type="button" className="ghost-btn">
+                        <button type="button" className="ghost-btn" onClick={cancelSubscription}>
                           Cancel plan
                         </button>
                       </>
@@ -689,95 +756,20 @@ export default function LawyerProfilePage() {
                     <div className="payment-header">
                       <div>
                         <h4>Payment method</h4>
-                        <p className="payment-subtitle">Secure checkout powered by Stripe (UI only).</p>
+                        <p className="payment-subtitle">Secure checkout powered by Stripe.</p>
                       </div>
-                      <span className="payment-badge">Cards accepted</span>
-                    </div>
-                    <div className="payment-methods">
-                      <button
-                        type="button"
-                        className={`method-pill ${paymentMethod === 'card' ? 'active' : ''}`}
-                        onClick={() => setPaymentMethod('card')}
-                      >
-                        Card (Visa/Mastercard)
-                      </button>
-                      <button
-                        type="button"
-                        className={`method-pill ${paymentMethod === 'fpx' ? 'active' : ''}`}
-                        onClick={() => setPaymentMethod('fpx')}
-                      >
-                        Internet Banking (FPX)
-                      </button>
-                    </div>
-                    <div className="payment-grid">
-                      {paymentMethod === 'card' ? (
-                        <>
-                          <div className="payment-field span-full">
-                            <label htmlFor="cardName">Name on card</label>
-                            <input id="cardName" type="text" placeholder="e.g. Aisyah Rahman" />
-                          </div>
-                          <div className="payment-field span-full">
-                            <label htmlFor="cardNumber">Card number</label>
-                            <input id="cardNumber" type="text" placeholder="1234 5678 9012 3456" />
-                          </div>
-                          <div className="payment-field">
-                            <label htmlFor="cardExpiry">Expiry</label>
-                            <input id="cardExpiry" type="text" placeholder="MM / YY" />
-                          </div>
-                          <div className="payment-field">
-                            <label htmlFor="cardCvc">CVC</label>
-                            <input id="cardCvc" type="text" placeholder="123" />
-                          </div>
-                          <div className="payment-field">
-                            <label htmlFor="billingEmail">Billing email</label>
-                            <input id="billingEmail" type="email" placeholder="email@example.com" />
-                          </div>
-                          <div className="payment-field">
-                            <label htmlFor="billingZip">Postal code</label>
-                            <input id="billingZip" type="text" placeholder="56000" />
-                          </div>
-                          <div className="payment-field span-full">
-                            <label htmlFor="billingCountry">Country</label>
-                            <select id="billingCountry" defaultValue="MY">
-                              <option value="MY">Malaysia</option>
-                              <option value="SG">Singapore</option>
-                              <option value="ID">Indonesia</option>
-                              <option value="TH">Thailand</option>
-                            </select>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div className="payment-field span-full">
-                            <label htmlFor="fpxBank">Select bank</label>
-                            <select id="fpxBank" defaultValue="">
-                              <option value="" disabled>
-                                Choose your bank
-                              </option>
-                              <option value="maybank">Maybank</option>
-                              <option value="cimb">CIMB</option>
-                              <option value="public">Public Bank</option>
-                              <option value="rhb">RHB</option>
-                              <option value="hongleong">Hong Leong</option>
-                            </select>
-                          </div>
-                          <div className="payment-field span-full">
-                            <label htmlFor="fpxEmail">Billing email</label>
-                            <input id="fpxEmail" type="email" placeholder="email@example.com" />
-                          </div>
-                        </>
-                      )}
+                      <span className="payment-badge">Stripe Checkout</span>
                     </div>
                     <div className="payment-actions">
-                      <button type="button" className="primary-btn">
-                        {paymentMethod === 'card' ? 'Pay RM150' : 'Continue to bank'}
+                      <button type="button" className="primary-btn" onClick={startCheckout}>
+                        Continue to Stripe Checkout
                       </button>
                       <button type="button" className="ghost-btn" onClick={() => setShowPayment(false)}>
                         Cancel
                       </button>
                     </div>
                     <p className="payment-hint">
-                      By clicking pay, you agree to our terms and Stripe processing. This is a UI placeholder.
+                      You will be redirected to Stripe to complete payment securely.
                     </p>
                   </div>
                 )}
