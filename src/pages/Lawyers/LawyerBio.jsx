@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import NavBar from '../../components/NavBar/NavBar';
 import './LawyerBio.css';
+import lawyerPortrait from '../../assets/lawyer1.png';
 
 const API_BASE = import.meta.env.VITE_APP_API || 'http://localhost:8000/api/v1';
 
@@ -34,6 +35,25 @@ const buildProfile = (raw) => {
     firmEmail: raw.firm?.email || raw.email || 'Firm email',
     image: raw.profile_image || raw.profileImage || raw.image || '',
   };
+};
+
+const dummyProfile = {
+  id: 'krystal-jung',
+  name: 'Krystal Jung',
+  bio: 'Krystal is a Kuala Lumpur-based family lawyer focused on personal matters, mediation, and compassionate client advocacy.',
+  location: 'Kuala Lumpur, Malaysia',
+  casesWon: '120+',
+  experience: '8+ years',
+  rating: '4.9',
+  expertise: ['Family & Personal Matters', 'Mediation', 'Custody'],
+  reviewQuote: 'Calm, clear, and incredibly supportive during a tough time.',
+  reviewReviewer: 'Client',
+  reviewStars: '5',
+  firmName: 'Jung & Partners',
+  firmAddress: 'Jalan Raja Chulan, Kuala Lumpur',
+  firmPhone: '+60 3-5555 2145',
+  firmEmail: 'krystal.jung@jungpartners.my',
+  image: lawyerPortrait,
 };
 
 const buildImageUrl = (value) => {
@@ -75,7 +95,11 @@ const LawyerBio = () => {
         if (isMounted) setProfile(normalized);
       } catch (err) {
         if (isMounted) {
-          setError(err.message || 'Failed to load lawyer');
+          if (id === dummyProfile.id) {
+            setProfile(dummyProfile);
+          } else {
+            setError(err.message || 'Failed to load lawyer');
+          }
         }
       } finally {
         if (isMounted) setLoading(false);
@@ -110,7 +134,7 @@ const LawyerBio = () => {
     );
   }
 
-  const imageUrl = buildImageUrl(profile.image);
+  const imageUrl = buildImageUrl(profile.image) || lawyerPortrait;
 
   return (
     <div className="lawyer-bio-page">

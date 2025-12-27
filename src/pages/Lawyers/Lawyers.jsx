@@ -23,23 +23,20 @@ const tabs = [
   { label: 'Intellectual Property' },
 ];
 
-const lawyerCards = [
-  {
-    id: 'krystal-jung',
-    label: '',
-    name: 'Krystal Jung',
-    location: '[CITY], [STATE]',
-    description: 'A generalist to handle most cases.',
-    image: lawyerPortrait,
-  },
-  { placeholder: true, description: 'A generalist to handle most cases.' },
-  { placeholder: true, description: 'A generalist to handle most cases.' },
-  { placeholder: true, description: 'A generalist to handle most cases.' },
-  { placeholder: true, description: 'A generalist to handle most cases.' },
-  { placeholder: true, description: 'A generalist to handle most cases.' },
-  { placeholder: true, description: 'A generalist to handle most cases.' },
-  { placeholder: true, description: 'A generalist to handle most cases.' },
-];
+const dummyLawyer = {
+  id: 'krystal-jung',
+  label: 'Family & Personal',
+  name: 'Krystal Jung',
+  location: 'Kuala Lumpur, Malaysia',
+  description: 'Compassionate family lawyer focused on personal matters and mediation.',
+  image: lawyerPortrait,
+  expertise: ['Family & Personal Matters', 'Mediation', 'Custody'],
+};
+
+const placeholderCards = Array.from({ length: 8 }, () => ({
+  placeholder: true,
+  description: 'A generalist to handle most cases.',
+}));
 
 const normalizeLawyerCard = (lawyer) => {
   if (!lawyer) return null;
@@ -102,6 +99,7 @@ const Lawyers = () => {
   const [lawyers, setLawyers] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [searchLocation, setSearchLocation] = useState('');
   const [searchPractice, setSearchPractice] = useState('');
   const [filterApplied, setFilterApplied] = useState(false);
@@ -110,6 +108,7 @@ const Lawyers = () => {
     let isMounted = true;
     const fetchLawyers = async () => {
       setLoading(true);
+      setError('');
       try {
         const res = await fetch(`${API_BASE}/lawyers`);
         if (!res.ok) {
@@ -120,12 +119,16 @@ const Lawyers = () => {
         const normalized = Array.isArray(items)
           ? items.map(normalizeLawyerCard).filter(Boolean)
           : [];
-        if (isMounted && normalized.length > 0) {
-          setLawyers(normalized);
-        }
-      } catch {
         if (isMounted) {
-          setLawyers([]);
+          const withDummy = normalized.length > 0
+            ? normalized
+            : [dummyLawyer];
+          setLawyers(withDummy);
+        }
+      } catch (err) {
+        if (isMounted) {
+          setLawyers([dummyLawyer]);
+          setError(err.message || 'Failed to load lawyers.');
         }
       } finally {
         if (isMounted) {
@@ -141,7 +144,7 @@ const Lawyers = () => {
   }, []);
 
   const applyFilter = () => {
-    const base = lawyers.length > 0 ? lawyers : lawyerCards;
+    const base = lawyers;
     const loc = searchLocation.trim().toLowerCase();
     const area = searchPractice.trim().toLowerCase();
     setFilterApplied(true);
@@ -162,8 +165,12 @@ const Lawyers = () => {
     setFiltered(base.filter(match));
   };
 
-  const baseCards = lawyers.length > 0 ? lawyers : lawyerCards;
-  const displayCards = filterApplied ? filtered : baseCards;
+  const showPlaceholders = loading && lawyers.length === 0;
+  const displayCards = showPlaceholders
+    ? placeholderCards
+    : (filterApplied ? filtered : lawyers);
+  const showEmptyState = !loading && !error && lawyers.length === 0;
+  const showNoResults = !loading && !error && filterApplied && lawyers.length > 0 && filtered.length === 0;
 
   return (
     <div className="lawyers-page">
@@ -225,6 +232,14 @@ const Lawyers = () => {
           ))}
         </div>
 
+        {error && <p className="lawyers-message error">{error}</p>}
+        {showEmptyState && (
+          <p className="lawyers-message">No lawyers are available yet. Check back soon.</p>
+        )}
+        {showNoResults && (
+          <p className="lawyers-message">No matches for those filters. Try another search.</p>
+        )}
+
         <section className="card-grid" aria-label="Lawyer results">
           {displayCards.map((card, index) => (
             <div key={card.id || card.label || `placeholder-${index}`} className="card-wrap">
@@ -269,11 +284,13 @@ const Lawyers = () => {
           ))}
         </section>
 
-        <div className="load-more-row">
-          <a className="load-more" href="/" onClick={(e) => e.preventDefault()}>
-            {loading ? 'Loading...' : 'Load more'}
-          </a>
-        </div>
+        {lawyers.length > 0 && (
+          <div className="load-more-row">
+            <a className="load-more" href="/" onClick={(e) => e.preventDefault()}>
+              {loading ? 'Loading...' : 'Load more'}
+            </a>
+          </div>
+        )}
       </main>
     </div>
   );

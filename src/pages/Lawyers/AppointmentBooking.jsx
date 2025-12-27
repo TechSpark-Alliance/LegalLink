@@ -113,7 +113,7 @@ const AppointmentBooking = () => {
   const [ackPrivacy, setAckPrivacy] = useState(false);
   const [language, setLanguage] = useState('');
   const [notes, setNotes] = useState('');
-  const [selectedDate, setSelectedDate] = useState(() => new Date());
+  const [selectedDate, setSelectedDate] = useState(null);
   const [selectedSlot, setSelectedSlot] = useState('');
   const [receipt, setReceipt] = useState(null);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
@@ -152,17 +152,6 @@ const AppointmentBooking = () => {
         if (!res.ok) throw new Error(data.detail || 'Failed to load availability');
         const slots = Array.isArray(data) ? data : data?.availability || [];
         setAvailability(slots);
-        const firstDate = slots[0]?.date;
-        if (firstDate) {
-          const d = toDateFromIso(firstDate);
-          setSelectedDate(d);
-          setVisibleMonth(d.getMonth());
-          setVisibleYear(d.getFullYear());
-          const firstSlot = slots.find((s) => s.date === firstDate);
-          if (firstSlot?.start) {
-            setSelectedSlot(firstSlot.start);
-          }
-        }
       } catch (err) {
         // eslint-disable-next-line no-console
         console.error(err);
@@ -196,7 +185,7 @@ const AppointmentBooking = () => {
     [mode, physicalMeetingOptions, virtualMeetingOptions]
   );
 
-  const isoSelected = toIsoLocal(selectedDate);
+  const isoSelected = selectedDate ? toIsoLocal(selectedDate) : '';
 
   const futureAvailability = useMemo(() => {
     const todayIso = toIsoLocal(new Date());
@@ -221,6 +210,7 @@ const AppointmentBooking = () => {
 
   useEffect(() => {
     // Keep visible month in sync with the selected date (useful when cancel/back changes selection).
+    if (!selectedDate) return;
     setVisibleMonth(selectedDate.getMonth());
     setVisibleYear(selectedDate.getFullYear());
   }, [selectedDate]);
@@ -331,29 +321,30 @@ const AppointmentBooking = () => {
     return `${formatTime(s)} - ${formatTime(e)}`;
   }, [selectedSlot]);
 
-  const selectedDateLabel = `${selectedDate.getDate().toString().padStart(2, '0')}/${(selectedDate.getMonth() + 1)
-    .toString()
-    .padStart(2, '0')}/${selectedDate.getFullYear()}`;
+  const selectedDateLabel = selectedDate
+    ? `${selectedDate.getDate().toString().padStart(2, '0')}/${(selectedDate.getMonth() + 1)
+        .toString()
+        .padStart(2, '0')}/${selectedDate.getFullYear()}`
+    : 'Select a date';
 
   const profilePath = id ? `/client/lawyers/lawyer/${id}` : '/client/lawyers';
 
-  const heroDateLabel = useMemo(
-    () =>
-      selectedDate.toLocaleDateString('en-GB', {
-        weekday: 'short',
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-      }),
-    [selectedDate]
-  );
+  const heroDateLabel = useMemo(() => {
+    if (!selectedDate) return 'Select a date';
+    return selectedDate.toLocaleDateString('en-GB', {
+      weekday: 'short',
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+  }, [selectedDate]);
 
   const buildAppointmentPayload = () => {
     const lawyerName = lawyerProfile?.full_name || lawyerProfile?.name || 'Not provided';
     const lawyerEmail = lawyerProfile?.email || 'Not provided';
     const lawyerPhone = lawyerProfile?.phone || 'Not provided';
-    const startDateTime = new Date(selectedDate);
-    const endDateTime = new Date(selectedDate);
+    const startDateTime = new Date(selectedDate || Date.now());
+    const endDateTime = new Date(selectedDate || Date.now());
     if (selectedSlot) {
       const [rawStart, rawEnd] = selectedSlot.split('-');
       const [sh, sm] = rawStart.split(':').map(Number);
@@ -398,6 +389,7 @@ const AppointmentBooking = () => {
   };
 
   const handleConfirm = () => {
+    if (!selectedDate || !selectedSlot) return;
     setReceipt({
       clientName: clientInfo.name,
       clientEmail: clientInfo.email,
@@ -420,7 +412,7 @@ const AppointmentBooking = () => {
   };
 
   const handleFinalize = async () => {
-    if (!selectedSlot || !lawyerId) return;
+    if (!selectedDate || !selectedSlot || !lawyerId) return;
     const token = getAuthToken();
     const payload = buildAppointmentPayload();
     const [slotStart] = selectedSlot.split('-');
@@ -500,7 +492,6 @@ const AppointmentBooking = () => {
             <h1>Book Appointment</h1>
             <p className="muted">Fill in the details below to schedule your consultation.</p>
           </div>
-          <div className="date-pill">Selected: {selectedDateLabel}</div>
         </header>
 
         <section className="booking-grid">
@@ -702,6 +693,7 @@ const AppointmentBooking = () => {
                     const isAllowed = allowedDates.has(iso);
                     const isSelected =
                       isAllowed &&
+                      selectedDate &&
                       day === selectedDate.getDate() &&
                       selectedDate.getMonth() === visibleMonth &&
                       selectedDate.getFullYear() === visibleYear;
@@ -782,7 +774,7 @@ const AppointmentBooking = () => {
               <button
                 type="button"
                 className="btn primary"
-                disabled={!selectedSlot || !ackFee || !ackPrivacy}
+                disabled={!selectedDate || !selectedSlot || !ackFee || !ackPrivacy}
                 onClick={handleConfirm}
               >
                 Review & submit booking

@@ -6,18 +6,6 @@ import InfoPanel from '../../components/InfoPanel/InfoPanel';
 import styles from './ClientHome.module.css';
 import lawyerImg from '../../assets/lawyer1.png';
 
-const getStoredUserName = () => {
-  if (typeof window === 'undefined') return null;
-  try {
-    const raw = localStorage.getItem('ll_user');
-    if (!raw) return null;
-    const user = JSON.parse(raw);
-    return user.full_name || user.fullName || user.name || user.email || null;
-  } catch {
-    return null;
-  }
-};
-
 const featureCards = [
   {
     title: 'Find the right lawyer',
@@ -95,14 +83,10 @@ const reviews = [
 ];
 
 const ClientHome = () => {
-  const userName = getStoredUserName() || 'Valued Client';
   return (
     <div className={styles.page}>
       <NavBar />
       <main className={styles.main}>
-        <div className={styles.greeting}>
-          <span className={styles.greetingPill}>Welcome back, {userName}</span>
-        </div>
         <Hero />
 
         <section className={styles.topLawyers}>
