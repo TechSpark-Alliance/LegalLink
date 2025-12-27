@@ -1,6 +1,8 @@
 .conversations-page {
   min-height: 100vh;
-  background: linear-gradient(180deg, rgba(41, 50, 60, 0.96) 0%, rgba(72, 85, 99, 0.94) 50%, #1a2334 100%);
+  background: radial-gradient(circle at 20% 20%, rgba(227, 195, 69, 0.08), rgba(41, 50, 60, 0.08)),
+    radial-gradient(circle at 80% 0%, rgba(72, 85, 99, 0.14), rgba(41, 50, 60, 0.08)),
+    #0f1422;
   color: var(--color-text-primary);
 }
 
