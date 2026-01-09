@@ -22,9 +22,9 @@ const buildProfile = (raw) => {
     name: raw.full_name || raw.fullName || raw.name || 'Lawyer',
     bio: raw.about || raw.bio || 'Biography not available.',
     location: raw.location || [raw.city, raw.state].filter(Boolean).join(', ') || 'Location unavailable',
-    casesWon: raw.casesWon || raw.cases_won || raw.cases || '70+',
-    experience: raw.years_of_experience || raw.yearsOfExperience || raw.experience || '3+ years',
-    rating: raw.rating || raw.review?.stars || raw.reviews?.[0]?.stars || '4.8',
+    casesWon: raw.casesWon || raw.cases_won || raw.cases || '',
+    experience: raw.years_of_experience || raw.yearsOfExperience || raw.experience || '',
+    rating: raw.rating || raw.review?.stars || raw.reviews?.[0]?.stars || '',
     expertise: normalizeExpertise(raw.expertise),
     reviewQuote: raw.review?.quote || raw.reviews?.[0]?.text || 'No reviews yet for this lawyer.',
     reviewReviewer: raw.review?.reviewer || raw.reviews?.[0]?.reviewer || 'Client',
@@ -144,24 +144,19 @@ const LawyerBio = () => {
           <button type="button" className="bio-btn ghost" onClick={() => navigate(-1)}>
             Back
           </button>
-          <button
+          {/* <button
             type="button"
             className="bio-btn link"
             onClick={() => navigate(`/client/lawyers/lawyer/${profile.id}/reviews`)}
           >
             Show all reviews
-          </button>
+          </button> */}
         </div>
 
         <section className="lawyer-bio-hero">
           <div className="bio-copy">
             <h1>Lawyer&apos;s profile</h1>
             <p className="bio-text">{profile.bio}</p>
-            <div className="bio-stats">
-              <span className="bio-pill">Cases Won {profile.casesWon}</span>
-              <span className="bio-pill">Experience {formatExperience(profile.experience)}</span>
-              <span className="bio-pill">Ratings {profile.rating}</span>
-            </div>
             {profile.expertise.length > 0 && (
               <div className="bio-expertise">
                 {profile.expertise.map((item) => (
@@ -169,10 +164,10 @@ const LawyerBio = () => {
                 ))}
               </div>
             )}
-            <div className="bio-review">
+            {/* <div className="bio-review">
               <div className="bio-review-title">Reviews</div>
               <p className="bio-review-quote">"{profile.reviewQuote}"</p>
-            </div>
+            </div> */}
           </div>
 
           <div className="bio-card">

@@ -87,6 +87,10 @@
 }
 
 .bio-review {
+  display: none;
+}
+
+.bio-review {
   margin-top: 12px;
 }
 
